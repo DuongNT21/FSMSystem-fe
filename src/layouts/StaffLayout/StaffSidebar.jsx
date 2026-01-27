@@ -20,6 +20,7 @@ export const StaffSidebar = ({
   // Sidebar navigation items
   const navItems = [
     { to: "/staff", icon: LayoutDashboard, label: "Dashboard", end: true },
+    { to: "/staff/raw-material", icon: Package, label: "Nguyên liệu" },
     { to: "/staff/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/staff/products", icon: Package, label: "Sản phẩm" },
     { to: "/staff/tasks", icon: ClipboardList, label: "Công việc" },
