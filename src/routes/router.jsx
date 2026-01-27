@@ -1,18 +1,83 @@
-import React from "react"
-import { useRoutes } from "react-router-dom";
+import React from "react";
+import { Navigate, useRoutes } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout/CustomerLayout";
 import { HomePage } from "../pages/HomePage";
+import { GuestGuard } from "../guards/GuestGuard";
+import { RoleBasedGuard } from "../guards/RoleBasedGuard";
+import { CustomerGuard } from "../guards/CustomerGuard";
+import { LoginPage } from "../pages/auth/LoginPage";
+import { AdminLayout } from "../layouts/AdminLayout/AdminLayout";
+import TestAdminPage from "../pages/admin/TestPage";
+import TestStaffPage from "../pages/staff/TestPage";
+import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
+import RegisterPage from "../pages/auth/RegisterPage";
 
-export const AppRoutes = () => 
-    useRoutes([
+export const AppRoutes = () =>
+  useRoutes([
+    {
+      path: "/login",
+      element: (
+        <GuestGuard>
+          <LoginPage />
+        </GuestGuard>
+      ),
+    },
+    {
+      path: "/register",
+      element: (
+        <GuestGuard>
+          <RegisterPage />
+        </GuestGuard>
+      ),
+    },
+    {
+      path: "/",
+      element: (
+        <CustomerGuard>
+          <CustomerLayout />
+        </CustomerGuard>
+      ),
+      children: [
         {
-            path: "/",
-            element: <CustomerLayout/>,
-            children: [
-                {
-                    path: "/",
-                    element: <HomePage/>
-                }
-            ]
-        }
-    ])
+          path: "/",
+          element: <HomePage />,
+        },
+      ],
+    },
+    {
+      path: "/admin",
+      element: (
+        <RoleBasedGuard allowedRoles={["Admin"]}>
+          <AdminLayout />
+        </RoleBasedGuard>
+      ),
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/admin/test" replace />,
+        },
+        {
+          path: "test",
+          element: <TestAdminPage />,
+        },
+      ],
+    },
+    {
+      path: "/staff",
+      element: (
+        <RoleBasedGuard allowedRoles={["Staff"]}>
+          <StaffLayout />
+        </RoleBasedGuard>
+      ),
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/staff/test" replace />,
+        },
+        {
+          path: "test",
+          element: <TestStaffPage />,
+        },
+      ],
+    },
+  ]);
