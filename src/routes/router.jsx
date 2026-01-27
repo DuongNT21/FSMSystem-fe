@@ -8,9 +8,11 @@ import { CustomerGuard } from "../guards/CustomerGuard";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { AdminLayout } from "../layouts/AdminLayout/AdminLayout";
 import TestAdminPage from "../pages/admin/TestPage";
-import TestStaffPage from "../pages/staff/TestPage";
 import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
 import RegisterPage from "../pages/auth/RegisterPage";
+import ListRawMaterials from "../pages/staff/raw-material/ListRawMaterials";
+import CreateRawMaterial from "../pages/staff/raw-material/CreateRawMaterial";
+import RawMaterialDetail from "../pages/staff/raw-material/RawMaterialDetail";
 
 export const AppRoutes = () =>
   useRoutes([
@@ -72,11 +74,15 @@ export const AppRoutes = () =>
       children: [
         {
           index: true,
-          element: <Navigate to="/staff/test" replace />,
+          element: <Navigate to="/staff/raw-material" replace />,
         },
         {
-          path: "test",
-          element: <TestStaffPage />,
+          path: "raw-material",
+          children: [
+            { index: true, element: <ListRawMaterials /> },
+            { path: "create", element: <CreateRawMaterial /> },
+            { path: ":id", element: <RawMaterialDetail /> },
+          ],
         },
       ],
     },
