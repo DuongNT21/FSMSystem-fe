@@ -1,21 +1,77 @@
-import React from "react";
-import { useRoutes } from "react-router-dom";
+import React from "react";;
+import { Navigate, useRoutes } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout/CustomerLayout";
 import { HomePage } from "../pages/HomePage";
-import { ShopPage } from "../modules/shop/pages/ShopPage";
-import { ShopLayout } from "../modules/shop/ShopLayout";
-import { BouquetCreateLayout } from "../modules/createBouquets/BouquetCreateLayout";
-import { BouquetCreatePage } from "../modules/createBouquets/pages/BouquetCreatePage";
 
 export const AppRoutes = () =>
   useRoutes([
     {
+      path: "/login",
+      element: (
+        <GuestGuard>
+          <LoginPage />
+        </GuestGuard>
+      ),
+    },
+    {
+      path: "/register",
+      element: (
+        <GuestGuard>
+          <RegisterPage />
+        </GuestGuard>
+      ),
+    },
+    {
       path: "/",
-      element: <CustomerLayout />,
+      element: (
+        <CustomerGuard>
+          <CustomerLayout />
+        </CustomerGuard>
+      ),
       children: [
         {
           path: "/",
           element: <HomePage />,
+        },
+      ],
+    },
+    {
+      path: "/admin",
+      element: (
+        <RoleBasedGuard allowedRoles={["Admin"]}>
+          <AdminLayout />
+        </RoleBasedGuard>
+      ),
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/admin/test" replace />,
+        },
+        {
+          path: "test",
+          element: <TestAdminPage />,
+        },
+      ],
+    },
+    {
+      path: "/staff",
+      element: (
+        <RoleBasedGuard allowedRoles={["Staff"]}>
+          <StaffLayout />
+        </RoleBasedGuard>
+      ),
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/staff/raw-material" replace />,
+        },
+        {
+          path: "raw-material",
+          children: [
+            { index: true, element: <ListRawMaterials /> },
+            { path: "create", element: <CreateRawMaterial /> },
+            { path: ":id", element: <RawMaterialDetail /> },
+          ],
         },
       ],
     },

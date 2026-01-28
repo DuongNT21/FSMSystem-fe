@@ -1,14 +1,14 @@
-import React from 'react'
-import { Header } from './Header'
-import { Outlet } from 'react-router-dom'
-import { Footer } from './Footer'
+import React from "react";
+import { Header } from "./Header";
+import { Outlet } from "react-router-dom";
+import { Footer } from "./Footer";
 
 export const CustomerLayout = () => {
   return (
     <div>
-      <Header/>
-      <Outlet/>
-      <Footer/>
+      <Header />
+      <Outlet />
+      <Footer />
     </div>
-  )
-}
+  );
+};
