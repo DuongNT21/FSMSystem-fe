@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { productApi } from "../api/product.api";
+import { productApi } from "../../../shared/api/product.api";
 import { ProductList } from "../components/ProductList";
 import { ProductFilter } from "../components/ProductFilter";
+
+import "./ShopPage.css";
+import { getPaginationPages } from "../../../shared/utils/pagination";
 
 export const ShopPage = () => {
   const [page, setPage] = useState(1);
@@ -9,11 +12,12 @@ export const ShopPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const pages = getPaginationPages(page, totalPages);
 
   const [filters, setFilters] = useState({
     status: 1,
     sort: "createdAt,asc",
-    size: 10,
+    size: 20,
   });
 
   useEffect(() => {
@@ -23,7 +27,7 @@ export const ShopPage = () => {
 
       try {
         const res = await productApi.getBouquets({
-          page: page - 1, // backend is 0-based
+          page: page - 1,
           ...filters,
         });
 
@@ -38,13 +42,12 @@ export const ShopPage = () => {
     };
 
     fetchBouquets();
-  }, [page, filters]); // IMPORTANT
+  }, [page, filters]);
 
   return (
     <div>
       <h1>Bouquet Shop</h1>
 
-      {/* FILTER UI */}
       <ProductFilter
         status={filters.status}
         sort={filters.sort}
@@ -59,17 +62,37 @@ export const ShopPage = () => {
       {!loading && error && <p style={{ color: "red" }}>{error}</p>}
       {!loading && !error && <ProductList bouquets={bouquets} />}
 
-      <div style={{ marginTop: 20 }}>
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-          Previous
+      <div className="pagination">
+        <button
+          className="nav-btn"
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+        >
+          ‹
         </button>
 
-        <span style={{ margin: "0 10px" }}>
-          Page {page} / {totalPages}
-        </span>
+        {pages.map((p, i) =>
+          p === "..." ? (
+            <span key={i} className="dots">
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              className={`page-btn ${p === page ? "active" : ""}`}
+              onClick={() => setPage(p)}
+            >
+              {p}
+            </button>
+          ),
+        )}
 
-        <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-          Next
+        <button
+          className="nav-btn"
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+        >
+          ›
         </button>
       </div>
     </div>

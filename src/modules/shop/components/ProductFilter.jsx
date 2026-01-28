@@ -31,9 +31,9 @@ export const ProductFilter = ({
         value={pageSize}
         onChange={(e) => onChange({ size: Number(e.target.value) })}
       >
-        <option value={4}>4 / page</option>
-        <option value={8}>8 / page</option>
-        <option value={12}>12 / page</option>
+        <option value={20}>20 / page</option>
+        <option value={40}>40 / page</option>
+        <option value={1}>1 / page Test</option>
       </select>
     </div>
   );

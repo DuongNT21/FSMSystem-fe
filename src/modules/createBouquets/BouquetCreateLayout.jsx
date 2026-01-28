@@ -1,9 +1,9 @@
 import React from "react";
-import { Header } from './Header'
+import { Header } from '../../shared/Header'
 import { Outlet } from 'react-router-dom'
-import { Footer } from './Footer'
+import { Footer } from '../../shared/Footer'
 
-export const ShopLayout = () => {
+export const BouquetCreateLayout = () => {
   return (
     <div>
       <Header/>
