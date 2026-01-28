@@ -27,6 +27,7 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
   const [materialInput, setMaterialInput] = useState({ name: "", quantity: 1 });
+  const [deleteImages, setDeleteImages] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,6 +79,10 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
   };
 
   const handleRemoveImage = (index) => {
+    const imageToRemove = formData.images[index];
+    if (mode === "update" && imageToRemove.isExisting && imageToRemove.id) {
+      setDeleteImages((prev) => [...prev, imageToRemove.id]);
+    }
     setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
@@ -117,6 +122,11 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
       status: parseInt(formData.status),
       images: formData.images.filter((img) => !img.isExisting).map((img) => img.image),
     };
+
+    if (mode === "update") {
+      payload.deleteImages = deleteImages;
+    }
+
     onSave(payload);
   };
 
