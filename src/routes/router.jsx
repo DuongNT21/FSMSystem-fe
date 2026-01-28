@@ -2,6 +2,21 @@ import React from "react";;
 import { Navigate, useRoutes } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout/CustomerLayout";
 import { HomePage } from "../pages/HomePage";
+import { GuestGuard } from "../guards/GuestGuard";
+import { LoginPage } from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import { AdminLayout } from "../layouts/AdminLayout/AdminLayout";
+import ListRawMaterials from "../pages/staff/raw-material/ListRawMaterials";
+import CreateRawMaterial from "../pages/staff/raw-material/CreateRawMaterial";
+import RawMaterialDetail from "../pages/staff/raw-material/RawMaterialDetail";
+import { ShopLayout } from "../modules/shop/ShopLayout";
+import { ShopPage } from "../modules/shop/pages/ShopPage";
+import { BouquetCreateLayout } from "../modules/createBouquets/BouquetCreateLayout";
+import { BouquetCreatePage } from "../modules/createBouquets/pages/BouquetCreatePage";
+import { CustomerGuard } from "../guards/CustomerGuard";
+import { RoleBasedGuard } from "../guards/RoleBasedGuard";
+import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
+import TestAdminPage from "../pages/admin/TestPage";
 
 export const AppRoutes = () =>
   useRoutes([
@@ -9,7 +24,7 @@ export const AppRoutes = () =>
       path: "/login",
       element: (
         <GuestGuard>
-          <LoginPage />
+          <LoginPage/>
         </GuestGuard>
       ),
     },
@@ -17,7 +32,7 @@ export const AppRoutes = () =>
       path: "/register",
       element: (
         <GuestGuard>
-          <RegisterPage />
+          <RegisterPage/>
         </GuestGuard>
       ),
     },
