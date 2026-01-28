@@ -1,18 +1,7 @@
-import React from "react";
+import React from "react";;
 import { Navigate, useRoutes } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout/CustomerLayout";
 import { HomePage } from "../pages/HomePage";
-import { GuestGuard } from "../guards/GuestGuard";
-import { RoleBasedGuard } from "../guards/RoleBasedGuard";
-import { CustomerGuard } from "../guards/CustomerGuard";
-import { LoginPage } from "../pages/auth/LoginPage";
-import { AdminLayout } from "../layouts/AdminLayout/AdminLayout";
-import TestAdminPage from "../pages/admin/TestPage";
-import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
-import RegisterPage from "../pages/auth/RegisterPage";
-import ListRawMaterials from "../pages/staff/raw-material/ListRawMaterials";
-import CreateRawMaterial from "../pages/staff/raw-material/CreateRawMaterial";
-import RawMaterialDetail from "../pages/staff/raw-material/RawMaterialDetail";
 
 export const AppRoutes = () =>
   useRoutes([
@@ -84,6 +73,24 @@ export const AppRoutes = () =>
             { path: ":id", element: <RawMaterialDetail /> },
           ],
         },
+      ],
+    },
+    {
+      path: "/shop",
+      element: <ShopLayout />,
+      children: [
+        { index: true, element: <ShopPage /> },
+        // { path: "create", element: <CreateProduct /> }, // "/shop/create"
+        // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+      ],
+    },
+    {
+      path: "/shop/create",
+      element: <BouquetCreateLayout/>,
+      children: [
+        { index: true, element: <BouquetCreatePage /> },
+        // { path: "create", element: <CreateProduct /> }, // "/shop/create"
+        // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
       ],
     },
   ]);

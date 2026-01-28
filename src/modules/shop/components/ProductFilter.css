@@ -1,0 +1,18 @@
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin: 20px auto 32px;
+  width: fit-content;
+
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fff;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+
+}
+
+.filter-bar select {
+  padding: 6px 10px;
+  border-radius: 6px;
+}
