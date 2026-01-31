@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Trash2 } from "lucide-react";
 import { rawMaterialService } from "../../../services/rawMaterialService";
 
 const ListRawMaterials = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchList = async () => {
     try {
       setLoading(true);
       const res = await rawMaterialService.getListRawMaterials();
       const data = res?.data ?? res;
-      setItems(Array.isArray(data) ? data : data?.data ?? []);
+      setItems(Array.isArray(data) ? data : (data?.data ?? []));
     } finally {
       setLoading(false);
     }
@@ -64,13 +65,42 @@ const ListRawMaterials = () => {
                   <td className="px-4 py-3">{it.quantity}</td>
                   <td className="px-4 py-3">{it.importPrice}</td>
                   <td className="px-4 py-3">
-                    <Link
-                      to={`/staff/raw-material/${it.id}`}
-                      className="inline-flex items-center gap-2 text-rose-500 hover:underline"
-                      title="Xem chi tiết"
-                    >
-                      <Eye className="w-4 h-4" /> Xem
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link
+                        to={`/staff/raw-material/${it.id}`}
+                        className="inline-flex items-center gap-2 text-rose-500 hover:underline"
+                        title="Xem chi tiết"
+                      >
+                        <Eye className="w-4 h-4" /> Xem
+                      </Link>
+
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Bạn có chắc muốn xóa nguyên liệu này?"))
+                            return;
+                          try {
+                            setDeletingId(it.id);
+                            await rawMaterialService.deleteRawMaterial(it.id);
+                            await fetchList();
+                          } catch (err) {
+                            console.error(err);
+                            alert(
+                              err?.response?.data?.message ??
+                                err.message ??
+                                "Lỗi khi xóa",
+                            );
+                          } finally {
+                            setDeletingId(null);
+                          }
+                        }}
+                        disabled={deletingId === it.id}
+                        className="inline-flex items-center gap-2 text-red-500 hover:underline"
+                        title="Xóa"
+                      >
+                        <Trash2 className="w-4 h-4" />{" "}
+                        {deletingId === it.id ? "Đang xóa..." : "Xóa"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

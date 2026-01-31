@@ -29,4 +29,17 @@ const getRawMaterialById = async (id) => {
         importPrice: response.data.importPrice
     }
 }
-export const rawMaterialApi = { createRawMaterial, getListRawMaterials, getRawMaterialById };
+
+const updateRawMaterial = async (id, data) => {
+    const response = await http.put(`/material/${id}`, data);
+    return {
+        id: response.data.id,
+    name: response.data.name,
+    quantity: response.data.quantity,
+    importPrice: response.data.importPrice
+    }
+}
+
+const deleteRawMaterial = async (id) => await http.delete(`/material/${id}`);
+
+export const rawMaterialApi = { createRawMaterial, getListRawMaterials, getRawMaterialById, updateRawMaterial, deleteRawMaterial };
