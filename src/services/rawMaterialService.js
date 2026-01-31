@@ -12,4 +12,10 @@ const getRawMaterialById = async (id) => {
     return await rawMaterialApi.getRawMaterialById(id);
 }
 
-export const rawMaterialService = { createRawMaterial, getListRawMaterials, getRawMaterialById };
+const updateRawMaterial = async (id, {name, quantity, importPrice}) => {
+    return await rawMaterialApi.updateRawMaterial(id, {name, quantity, importPrice});
+}
+
+const deleteRawMaterial = async (id) => await rawMaterialApi.deleteRawMaterial(id)
+
+export const rawMaterialService = { createRawMaterial, getListRawMaterials, getRawMaterialById, updateRawMaterial, deleteRawMaterial };
