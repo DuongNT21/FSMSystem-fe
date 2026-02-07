@@ -4,9 +4,9 @@ const createRawMaterial = async ({name, quantity, importPrice}) => {
   return await rawMaterialApi.createRawMaterial({name, quantity, importPrice});
 }
 
-const getListRawMaterials = async () => {
-    return await rawMaterialApi.getListRawMaterials();
-}
+const getListRawMaterials = async (params) => {
+  return await rawMaterialApi.getListRawMaterials(params);
+};
 
 const getRawMaterialById = async (id) => {
     return await rawMaterialApi.getRawMaterialById(id);
