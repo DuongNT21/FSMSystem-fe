@@ -7,13 +7,14 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
         name: bouquet.name || "",
         description: bouquet.description || "",
         price: bouquet.price || "",
+        quantity: bouquet.quantity || 1,
         status: bouquet.status ?? 1,
         images: bouquet.images
           ? bouquet.images.map((img) => ({
               ...img,
               image:
-                img.image && !img.image.startsWith("http") && !img.image.startsWith("data:")
-                  ? `data:image/jpeg;base64,${img.image}`
+                img.image && !img.image.startsWith("http")
+                  ? `https://res.cloudinary.com/di3ruboxo/image/upload/${img.image}`
                   : img.image,
               isExisting: true,
             }))
@@ -21,7 +22,7 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
         materials: bouquet.materials || [],
       };
     }
-    return { name: "", description: "", price: "", status: 1, images: [], materials: [] };
+    return { name: "", description: "", price: "", status: 1, images: [], materials: [],quantity: 1 };
   });
 
   const [imageUrl, setImageUrl] = useState("");

@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { productApi } from "../../../shared/api/product.api";
-import { ProductList } from "../components/ProductList";
-import { ProductFilter } from "../components/ProductFilter";
-import { BouquetModal } from "../components/BouquetModal";
+import { productApi } from "../../shared/api/product.api";
+import { ProductList } from "../../shared/components/Shop/ProductList";
+import { ProductFilter } from "../../shared/components/Shop/ProductFilter";
 
-import "./BouquetCreatePage.css";
-import { getPaginationPages } from "../../../shared/utils/pagination";
-import { handleError } from "../../../shared/utils/errorHandler";
+import "./ShopPage.css";
+import { getPaginationPages } from "../../shared/utils/pagination";
 
-export const BouquetCreatePage = () => {
+export const ShopPage = () => {
   const [page, setPage] = useState(1);
   const [bouquets, setBouquets] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -21,11 +19,6 @@ export const BouquetCreatePage = () => {
     sort: "createdAt,asc",
     size: 20,
   });
-
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("create");
-  const [selectedBouquet, setSelectedBouquet] = useState(null);
 
   useEffect(() => {
     const fetchBouquets = async () => {
@@ -51,46 +44,9 @@ export const BouquetCreatePage = () => {
     fetchBouquets();
   }, [page, filters]);
 
-  const handleCreate = () => {
-    setModalMode("create");
-    setSelectedBouquet(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = (bouquet) => {
-    setModalMode("update");
-    setSelectedBouquet(bouquet);
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async (data) => {
-    try {
-      if (modalMode === "create") {
-        await productApi.create(data);
-      } else {
-        await productApi.update({ ...data, id: selectedBouquet.id });
-      }
-      setIsModalOpen(false);
-      setFilters((prev) => ({ ...prev }));
-    } catch (error) {
-      handleError(error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete?")) {
-      try {
-        await productApi.delete(id);
-        setFilters((prev) => ({ ...prev }));
-      } catch (error) {
-        handleError(error);
-      }
-    }
-  };
-
   return (
     <div>
-      <h1>Manage Bouquets</h1>
+      <h1>Bouquet Shop</h1>
 
       <ProductFilter
         status={filters.status}
@@ -100,12 +56,11 @@ export const BouquetCreatePage = () => {
           setPage(1); // reset page when filter changes
           setFilters((prev) => ({ ...prev, ...changed }));
         }}
-        onCreate={handleCreate}
       />
 
       {loading && <p>Loading...</p>}
       {!loading && error && <p style={{ color: "red" }}>{error}</p>}
-      {!loading && !error && <ProductList bouquets={bouquets} onEdit={handleEdit} onDelete={handleDelete} />}
+      {!loading && !error && <ProductList bouquets={bouquets} />}
 
       <div className="pagination">
         <button
@@ -140,15 +95,6 @@ export const BouquetCreatePage = () => {
           ›
         </button>
       </div>
-
-      {isModalOpen && (
-        <BouquetModal
-          mode={modalMode}
-          bouquet={selectedBouquet}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSave}
-        />
-      )}
     </div>
   );
 };

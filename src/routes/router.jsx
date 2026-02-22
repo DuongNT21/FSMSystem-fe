@@ -9,14 +9,15 @@ import { AdminLayout } from "../layouts/AdminLayout/AdminLayout";
 import ListRawMaterials from "../pages/staff/raw-material/ListRawMaterials";
 import CreateRawMaterial from "../pages/staff/raw-material/CreateRawMaterial";
 import RawMaterialDetail from "../pages/staff/raw-material/RawMaterialDetail";
-import { ShopLayout } from "../modules/shop/ShopLayout";
-import { ShopPage } from "../modules/shop/pages/ShopPage";
-import { BouquetCreateLayout } from "../modules/createBouquets/BouquetCreateLayout";
-import { BouquetCreatePage } from "../modules/createBouquets/pages/BouquetCreatePage";
 import { CustomerGuard } from "../guards/CustomerGuard";
 import { RoleBasedGuard } from "../guards/RoleBasedGuard";
 import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
 import TestAdminPage from "../pages/admin/TestPage";
+import { ShopPage } from "../pages/shop/ShopPage";
+import { ShopLayout } from "../layouts/ShopLayout/ShopLayout";
+import { BouquetCreateLayout } from "../layouts/BouquetCreateLayout/BouquetCreateLayout";
+import { BouquetCreatePage } from "../pages/bouquetCreate/BouquetCreatePage";
+
 
 export const AppRoutes = () =>
   useRoutes([
@@ -92,7 +93,7 @@ export const AppRoutes = () =>
     },
     {
       path: "/shop",
-      element: <ShopLayout />,
+      element: <ShopLayout/>,
       children: [
         { index: true, element: <ShopPage /> },
         // { path: "create", element: <CreateProduct /> }, // "/shop/create"
