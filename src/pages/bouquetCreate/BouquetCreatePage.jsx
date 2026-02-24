@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { productApi } from "../../shared/api/product.api";
+import { productApi } from "../../apis/flowerApi";
 import { ProductList } from "../../shared/components/BouquetCreate/ProductList";
 import { ProductFilter } from "../../shared/components/BouquetCreate/ProductFilter";
 import { BouquetModal } from "../../shared/components/BouquetCreate/BouquetModal";
@@ -71,6 +71,7 @@ export const BouquetCreatePage = () => {
         await productApi.update({ ...data, id: selectedBouquet.id });
       }
       setIsModalOpen(false);
+      // Trigger re-fetch
       setFilters((prev) => ({ ...prev }));
     } catch (error) {
       handleError(error);
@@ -89,8 +90,8 @@ export const BouquetCreatePage = () => {
   };
 
   return (
-    <div>
-      <h1>Manage Bouquets</h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Manage Bouquets</h1>
 
       <ProductFilter
         status={filters.status}
