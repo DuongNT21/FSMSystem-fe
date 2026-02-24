@@ -13,6 +13,9 @@ import RegisterPage from "../pages/auth/RegisterPage";
 import ListRawMaterials from "../pages/staff/raw-material/ListRawMaterials";
 import CreateRawMaterial from "../pages/staff/raw-material/CreateRawMaterial";
 import RawMaterialDetail from "../pages/staff/raw-material/RawMaterialDetail";
+import ListCategories from "../pages/admin/category/ListCategories";
+import CreateCategory from "../pages/admin/category/CreateCategory";
+import CategoryDetail from "../pages/admin/category/CategoryDetail";
 
 export const AppRoutes = () =>
   useRoutes([
@@ -61,6 +64,32 @@ export const AppRoutes = () =>
         {
           path: "test",
           element: <TestAdminPage />,
+        },
+      ],
+    },
+    {
+      path: "/admin/categories",
+      element: (
+        <RoleBasedGuard allowedRoles={["Admin"]}>
+          <AdminLayout />
+        </RoleBasedGuard>
+      ),
+      children: [
+        {
+          index: true,
+          element: <Navigate to="list" replace />,
+        },
+        {
+          path: "list",
+          element: <ListCategories />,
+        },
+        {
+          path: "create",
+          element: <CreateCategory />,
+        },
+        {
+          path: ":id",
+          element: <CategoryDetail />,
         },
       ],
     },
