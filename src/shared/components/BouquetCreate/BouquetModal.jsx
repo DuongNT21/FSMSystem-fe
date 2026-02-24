@@ -7,13 +7,14 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
         name: bouquet.name || "",
         description: bouquet.description || "",
         price: bouquet.price || "",
+        quantity: bouquet.quantity || 1,
         status: bouquet.status ?? 1,
         images: bouquet.images
           ? bouquet.images.map((img) => ({
               ...img,
               image:
-                img.image && !img.image.startsWith("http") && !img.image.startsWith("data:")
-                  ? `data:image/jpeg;base64,${img.image}`
+                img.image && !img.image.startsWith("http")
+                  ? `https://res.cloudinary.com/di3ruboxo/image/upload/${img.image}`
                   : img.image,
               isExisting: true,
             }))
@@ -21,12 +22,13 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
         materials: bouquet.materials || [],
       };
     }
-    return { name: "", description: "", price: "", status: 1, images: [], materials: [] };
+    return { name: "", description: "", price: "", status: 1, images: [], materials: [],quantity: 1 };
   });
 
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
   const [materialInput, setMaterialInput] = useState({ name: "", quantity: 1 });
+  const [deleteImages, setDeleteImages] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,6 +80,10 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
   };
 
   const handleRemoveImage = (index) => {
+    const imageToRemove = formData.images[index];
+    if (mode === "update" && imageToRemove.isExisting && imageToRemove.id) {
+      setDeleteImages((prev) => [...prev, imageToRemove.id]);
+    }
     setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
@@ -117,6 +123,11 @@ export const BouquetModal = ({ mode, bouquet, onClose, onSave }) => {
       status: parseInt(formData.status),
       images: formData.images.filter((img) => !img.isExisting).map((img) => img.image),
     };
+
+    if (mode === "update") {
+      payload.deleteImages = deleteImages;
+    }
+
     onSave(payload);
   };
 
