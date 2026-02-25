@@ -46,8 +46,8 @@ export const AdminProductList = () => {
   const fetchMaterials = async () => {
     try {
       const response = await materialApi.getAll({ size: 100 });
-      const d = response?.data;
-      setMaterials(Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : []);
+      const d = response?.data?.data;
+      setMaterials(Array.isArray(d) ? d : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
     }
@@ -219,7 +219,7 @@ export const AdminProductList = () => {
                       <div className="flex flex-wrap gap-1">
                         {b.bouquetsMaterials?.slice(0, 2).map((m, idx) => (
                           <span key={idx} className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded">
-                            Vật tư #{m.materialId} (x{m.quantity})
+                            {m.rawMaterialName} (x{m.quantity})
                           </span>
                         ))}
                         {b.bouquetsMaterials?.length > 2 && (

@@ -21,8 +21,8 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     const fetchMaterials = async () => {
       try {
         const response = await materialApi.getAll({ size: 100 });
-        const d = response?.data;
-        setAllMaterials(Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : []);
+        const d = response?.data?.data;
+        setAllMaterials(Array.isArray(d) ? d : []);
       } catch (error) {
         console.error("Error fetching materials:", error);
       }
@@ -38,7 +38,8 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         status: bouquet.status || 1,
         description: bouquet.description || "",
         materials: bouquet.bouquetsMaterials?.map(m => ({
-          id: m.materialId,
+          id: m.rawMaterialId,
+          name: m.rawMaterialName,
           quantity: m.quantity
         })) || []
       });
@@ -58,6 +59,18 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     setNewImagePreviews([]);
   }, [bouquet]);
 
+  // Once allMaterials loads, resolve ids for existing materials matched by name
+  useEffect(() => {
+    if (!allMaterials.length) return;
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.map(m => ({
+        ...m,
+        id: m.id ?? allMaterials.find(am => am.name === m.name)?.id
+      }))
+    }));
+  }, [allMaterials]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -67,10 +80,10 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     if (!materialId) return;
     const id = parseInt(materialId);
     if (formData.materials.find(m => m.id === id)) return;
-    
+    const mat = allMaterials.find(m => m.id === id);
     setFormData({
       ...formData,
-      materials: [...formData.materials, { id, quantity: 1 }]
+      materials: [...formData.materials, { id, name: mat?.name, quantity: 1 }]
     });
   };
 
@@ -132,7 +145,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         price: parseFloat(formData.price),
         status: parseInt(formData.status),
         description: formData.description,
-        materials: formData.materials
+        materials: formData.materials.map(({ id, quantity }) => ({ id, quantity }))
       };
       if (bouquet && deletedPublicIds.length > 0) {
         requestPayload.deleteImages = deletedPublicIds;
@@ -240,7 +253,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                         return (
                           <tr key={m.id}>
                             <td className="px-4 py-3">
-                              <span className="text-sm font-medium text-slate-700">{materialInfo?.name || `Vật tư #${m.id}`}</span>
+                              <span className="text-sm font-medium text-slate-700">{materialInfo?.name ?? m.name}</span>
                               <div className="text-[11px] text-slate-400 italic">Tồn kho: {materialInfo?.quantity || 0}</div>
                             </td>
                             <td className="px-4 py-3">
