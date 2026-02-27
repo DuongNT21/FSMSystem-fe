@@ -1,4 +1,4 @@
-import React from "react";;
+import React from "react";
 import { Navigate, useRoutes } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout/CustomerLayout";
 import { HomePage } from "../pages/HomePage";
@@ -19,15 +19,17 @@ import { CustomerGuard } from "../guards/CustomerGuard";
 import { RoleBasedGuard } from "../guards/RoleBasedGuard";
 import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
 import TestAdminPage from "../pages/admin/TestPage";
-
-
+import InventoryPage from "../pages/admin/inventory/InventoryPage";
+import InventoryLogPage from "../pages/admin/inventory/InventoryLogPage";
+import CreateBatchPage from "../pages/admin/inventory/CreateBatchPage";
+import CategoryDetail from "../pages/admin/category/CategoryDetail";
 export const AppRoutes = () =>
   useRoutes([
     {
       path: "/login",
       element: (
         <GuestGuard>
-          <LoginPage/>
+          <LoginPage />
         </GuestGuard>
       ),
     },
@@ -35,7 +37,7 @@ export const AppRoutes = () =>
       path: "/register",
       element: (
         <GuestGuard>
-          <RegisterPage/>
+          <RegisterPage />
         </GuestGuard>
       ),
     },
@@ -63,37 +65,40 @@ export const AppRoutes = () =>
       children: [
         {
           index: true,
-          element: <Navigate to="/admin/test" replace />,
+          element: <Navigate to="test" replace />,
         },
         {
           path: "test",
           element: <TestAdminPage />,
         },
-      ],
-    },
-    {
-      path: "/admin/categories",
-      element: (
-        <RoleBasedGuard allowedRoles={["Admin"]}>
-          <AdminLayout />
-        </RoleBasedGuard>
-      ),
-      children: [
+
+        // ===== CATEGORY (giữ nguyên code team) =====
         {
-          index: true,
-          element: <Navigate to="list" replace />,
+          path: "categories",
+          children: [
+            { index: true, element: <Navigate to="list" replace /> },
+            { path: "list", element: <ListCategories /> },
+            { path: "create", element: <CreateCategory /> },
+            { path: ":id", element: <CategoryDetail /> },
+          ],
         },
+
+        // ===== INVENTORY (ADD mới) =====
         {
-          path: "list",
-          element: <ListCategories />,
+          path: "inventory",
+          element: <InventoryPage />,
         },
+
+        // ===== INVENTORY LOG =====
         {
-          path: "create",
-          element: <CreateCategory />,
+          path: "inventory/:id/logs",
+          element: <InventoryLogPage />,
         },
+
+        // ===== CREATE INVENTORY BATCH =====
         {
-          path: ":id",
-          element: <CategoryDetail />,
+          path: "inventory/create",
+          element: <CreateBatchPage />,
         },
       ],
     },
@@ -130,7 +135,7 @@ export const AppRoutes = () =>
     },
     {
       path: "/shop/create",
-      element: <BouquetCreateLayout/>,
+      element: <BouquetCreateLayout />,
       children: [
         { index: true, element: <BouquetCreatePage /> },
         // { path: "create", element: <CreateProduct /> }, // "/shop/create"
