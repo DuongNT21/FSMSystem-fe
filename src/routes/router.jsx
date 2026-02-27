@@ -11,10 +11,6 @@ import CreateRawMaterial from "../pages/staff/raw-material/CreateRawMaterial";
 import RawMaterialDetail from "../pages/staff/raw-material/RawMaterialDetail";
 import ListCategories from "../pages/admin/category/ListCategories";
 import CreateCategory from "../pages/admin/category/CreateCategory";
-import { ShopLayout } from "../modules/shop/ShopLayout";
-import { ShopPage } from "../modules/shop/pages/ShopPage";
-import { BouquetCreateLayout } from "../modules/createBouquets/BouquetCreateLayout";
-import { BouquetCreatePage } from "../modules/createBouquets/pages/BouquetCreatePage";
 import { CustomerGuard } from "../guards/CustomerGuard";
 import { RoleBasedGuard } from "../guards/RoleBasedGuard";
 import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
@@ -23,6 +19,14 @@ import InventoryPage from "../pages/admin/inventory/InventoryPage";
 import InventoryLogPage from "../pages/admin/inventory/InventoryLogPage";
 import CreateBatchPage from "../pages/admin/inventory/CreateBatchPage";
 import CategoryDetail from "../pages/admin/category/CategoryDetail";
+import { ShopLayout } from "../layouts/ShopLayout/ShopLayout";
+import { BouquetCreateLayout } from "../layouts/BouquetCreateLayout/BouquetCreateLayout";
+// import { BouquetCreatePage } from "../pages/bouquetCreate/BouquetCreatePage";
+import { AdminProductList } from "../pages/admin/AdminProductList.jsx";
+import {AdminPromotionList} from "../pages/admin/AdminPromotionList.jsx";
+import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
+import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
+
 export const AppRoutes = () =>
   useRoutes([
     {
@@ -73,6 +77,24 @@ export const AppRoutes = () =>
         },
 
         // ===== CATEGORY (giữ nguyên code team) =====
+        {
+          path: "products",
+          element: <AdminProductList />,
+        },
+        {
+          path: "promotions",
+          element: <AdminPromotionList />,
+        },
+      ],
+    },
+    {
+      path: "/admin/categories",
+      element: (
+        <RoleBasedGuard allowedRoles={["Admin"]}>
+          <AdminLayout />
+        </RoleBasedGuard>
+      ),
+      children: [
         {
           path: "categories",
           children: [
@@ -136,10 +158,20 @@ export const AppRoutes = () =>
     {
       path: "/shop/create",
       element: <BouquetCreateLayout />,
+      element: <ShopLayout/>,
       children: [
-        { index: true, element: <BouquetCreatePage /> },
-        // { path: "create", element: <CreateProduct /> }, // "/shop/create"
-        // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+        { index: true, element: <CustomerProductList /> },
+        { path: ":id", element: <CustomerProductDetail /> },
       ],
     },
+  ]);
+    // {
+    //   path: "/shop/create",
+    //   element: <BouquetCreateLayout/>,
+    //   children: [
+    //     { index: true, element: <BouquetCreatePage /> },
+    //     // { path: "create", element: <CreateProduct /> }, // "/shop/create"
+    //     // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+    //   ],
+    // },
   ]);

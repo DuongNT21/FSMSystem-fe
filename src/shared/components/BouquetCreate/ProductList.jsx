@@ -22,14 +22,14 @@ export const ProductList = ({ bouquets = [], onEdit, onDelete }) => {
         <tbody>
           {bouquets.map((item) => {
             const bouquet = item.bouquet ?? item;
-            const base64Image = bouquet.images?.length > 0 ? bouquet.images[0].image : null;
+            const imagePath = bouquet.images?.length > 0 ? bouquet.images[0].image : null;
 
-            const imageSrc = base64Image
-              ? base64Image.startsWith("http") || base64Image.startsWith("data:")
-                ? base64Image
-                : `data:image/jpeg;base64,${base64Image}`
+            const imageSrc = imagePath
+              ? imagePath.startsWith("http")
+                ? imagePath
+                : `https://res.cloudinary.com/di3ruboxo/image/upload/${imagePath}`
               : "https://placehold.co/400?text=No+Image";
-
+            console.log("imagepath ", imagePath);
             return (
               <tr
                 key={bouquet.id}

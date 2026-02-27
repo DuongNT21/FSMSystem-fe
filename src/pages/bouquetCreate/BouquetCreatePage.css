@@ -3,7 +3,6 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-
   margin: 40px 0;
   font-family: inherit;
 }
@@ -12,15 +11,12 @@
 .nav-btn {
   min-width: 36px;
   height: 36px;
-
   border-radius: 10px;
   border: 1px solid #e5e5e5;
   background: #fff;
-
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-
   transition: all 0.2s ease;
 }
 
