@@ -1,4 +1,4 @@
-import api from "../shared/api/axiosClient";
+import api from "../apis/axiosClient";
 
 // ===== GET ALL BATCH =====
 export const getAllBatch = () => api.get("/raw-material-batches");

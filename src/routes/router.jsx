@@ -23,7 +23,7 @@ import { ShopLayout } from "../layouts/ShopLayout/ShopLayout";
 import { BouquetCreateLayout } from "../layouts/BouquetCreateLayout/BouquetCreateLayout";
 // import { BouquetCreatePage } from "../pages/bouquetCreate/BouquetCreatePage";
 import { AdminProductList } from "../pages/admin/AdminProductList.jsx";
-import {AdminPromotionList} from "../pages/admin/AdminPromotionList.jsx";
+import { AdminPromotionList } from "../pages/admin/AdminPromotionList.jsx";
 import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
 import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
 
@@ -85,6 +85,18 @@ export const AppRoutes = () =>
           path: "promotions",
           element: <AdminPromotionList />,
         },
+        {
+          path: "inventory",
+          element: <InventoryPage />,
+        },
+        {
+          path: "inventory/:id/logs",
+          element: <InventoryLogPage />,
+        },
+        {
+          path: "inventory/create",
+          element: <CreateBatchPage />,
+        },
       ],
     },
     {
@@ -95,33 +107,10 @@ export const AppRoutes = () =>
         </RoleBasedGuard>
       ),
       children: [
-        {
-          path: "categories",
-          children: [
-            { index: true, element: <Navigate to="list" replace /> },
-            { path: "list", element: <ListCategories /> },
-            { path: "create", element: <CreateCategory /> },
-            { path: ":id", element: <CategoryDetail /> },
-          ],
-        },
-
-        // ===== INVENTORY (ADD mới) =====
-        {
-          path: "inventory",
-          element: <InventoryPage />,
-        },
-
-        // ===== INVENTORY LOG =====
-        {
-          path: "inventory/:id/logs",
-          element: <InventoryLogPage />,
-        },
-
-        // ===== CREATE INVENTORY BATCH =====
-        {
-          path: "inventory/create",
-          element: <CreateBatchPage />,
-        },
+        { index: true, element: <Navigate to="list" replace /> },
+        { path: "list", element: <ListCategories /> },
+        { path: "create", element: <CreateCategory /> },
+        { path: ":id", element: <CategoryDetail /> },
       ],
     },
     {
@@ -150,7 +139,7 @@ export const AppRoutes = () =>
       path: "/shop",
       element: <ShopLayout />,
       children: [
-        { index: true, element: <ShopPage /> },
+        { index: true, element: <CustomerProductList /> },
         // { path: "create", element: <CreateProduct /> }, // "/shop/create"
         // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
       ],
@@ -158,20 +147,19 @@ export const AppRoutes = () =>
     {
       path: "/shop/create",
       element: <BouquetCreateLayout />,
-      element: <ShopLayout/>,
+      // element: <ShopLayout />,
       children: [
         { index: true, element: <CustomerProductList /> },
         { path: ":id", element: <CustomerProductDetail /> },
       ],
     },
   ]);
-    // {
-    //   path: "/shop/create",
-    //   element: <BouquetCreateLayout/>,
-    //   children: [
-    //     { index: true, element: <BouquetCreatePage /> },
-    //     // { path: "create", element: <CreateProduct /> }, // "/shop/create"
-    //     // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
-    //   ],
-    // },
-  ]);
+// {
+//   path: "/shop/create",
+//   element: <BouquetCreateLayout/>,
+//   children: [
+//     { index: true, element: <BouquetCreatePage /> },
+//     // { path: "create", element: <CreateProduct /> }, // "/shop/create"
+//     // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+//   ],
+// },
