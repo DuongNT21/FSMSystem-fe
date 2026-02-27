@@ -1,5 +1,5 @@
 import { rawMaterialApi } from "../apis/rawMaterialApi";
-import api from "../shared/api/axiosClient";
+import api from "../apis/axiosClient";
 const createRawMaterial = async ({ name, quantity, importPrice }) => {
   return await rawMaterialApi.createRawMaterial({
     name,
