@@ -21,6 +21,7 @@ const RegisterPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // State chứa dữ liệu form
   const [formData, setFormData] = useState({
@@ -44,11 +45,9 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Validate mật khẩu nhập lại
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Mật khẩu nhập lại không khớp!");
-      return;
-    }
+    // Client-side validation
+    const valid = validate();
+    if (!valid) return;
 
     setIsLoading(true);
 
@@ -59,9 +58,6 @@ const RegisterPage = () => {
       // Nếu user không nhập avatar, có thể gán ảnh mặc định ở đây hoặc để backend xử lý
       const payload = {
         ...registerData,
-        avatar:
-          registerData.avatar ||
-          "https://ui-avatars.com/api/?name=" + registerData.fullname,
       };
 
       await register(payload);
@@ -78,6 +74,63 @@ const RegisterPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const validate = () => {
+    const v = {};
+    const trim = (s) => (typeof s === "string" ? s.trim() : "");
+
+    if (!trim(formData.fullname)) {
+      v.fullname = "Vui lòng nhập họ và tên.";
+    } else if (trim(formData.fullname).length < 2) {
+      v.fullname = "Họ và tên quá ngắn.";
+    }
+
+    if (!trim(formData.username)) {
+      v.username = "Vui lòng nhập tên đăng nhập.";
+    } else if (!/^[a-zA-Z0-9._-]{3,}$/.test(formData.username)) {
+      v.username =
+        "Tên đăng nhập phải có ít nhất 3 ký tự (chỉ chữ, số, . _ -).";
+    }
+
+    if (!trim(formData.email)) {
+      v.email = "Vui lòng nhập email.";
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      v.email = "Email không hợp lệ.";
+    }
+
+    if (!trim(formData.phoneNumber)) {
+      v.phoneNumber = "Vui lòng nhập số điện thoại.";
+    } else if (
+      !/^\+?\d{9,12}$/.test(formData.phoneNumber.replace(/\s+/g, ""))
+    ) {
+      v.phoneNumber = "Số điện thoại không hợp lệ.";
+    }
+
+    if (!trim(formData.address)) {
+      v.address = "Vui lòng nhập địa chỉ giao hàng.";
+    }
+
+    if (!formData.password) {
+      v.password = "Vui lòng nhập mật khẩu.";
+    } else if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(formData.password)) {
+      v.password = "Mật khẩu phải ít nhất 8 ký tự, bao gồm chữ và số.";
+    }
+
+    if (!formData.confirmPassword) {
+      v.confirmPassword = "Vui lòng xác nhận mật khẩu.";
+    } else if (formData.password !== formData.confirmPassword) {
+      v.confirmPassword = "Mật khẩu nhập lại không khớp.";
+    }
+
+    setErrors(v);
+
+    const firstError = Object.values(v)[0];
+    if (firstError) {
+      toast.error(firstError);
+      return false;
+    }
+    return true;
   };
 
   // Helper để render input field nhanh gọn
@@ -104,16 +157,16 @@ const RegisterPage = () => {
           id={id}
           name={id}
           type={type}
-          required={id !== "avatar"} // Avatar có thể không bắt buộc
+          required={id !== "avatar"}
           value={formData[id]}
           onChange={handleChange}
           className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all sm:text-sm"
           placeholder={placeholder}
         />
       </div>
+      {errors[id] && <p className="text-sm text-red-600 mt-1">{errors[id]}</p>}
     </div>
   );
-
   return (
     <div className="min-h-screen bg-rose-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl w-full space-y-8 bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-rose-100">
@@ -136,7 +189,7 @@ const RegisterPage = () => {
         </div>
 
         {/* --- Form --- */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
           {/* Grid Layout cho các trường thông tin */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Cột trái: Thông tin cá nhân */}
@@ -184,7 +237,7 @@ const RegisterPage = () => {
             <div className="col-span-1">
               <label
                 htmlFor="password"
-                class="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Mật khẩu
               </label>
@@ -220,7 +273,7 @@ const RegisterPage = () => {
             <div className="col-span-1">
               <label
                 htmlFor="confirmPassword"
-                class="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Xác nhận mật khẩu
               </label>
