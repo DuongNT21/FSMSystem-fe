@@ -27,6 +27,7 @@ export const AdminSidebar = ({
     { to: "/admin/promotions", icon: Star , label: "Khuyến mãi"},
     { to: "/admin/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/admin/customers", icon: Users, label: "Khách hàng" },
+    { to: "/admin/inventory", icon: Package, label: "Inventory" },
     { to: "/admin/categories", icon: Tags, label: "Danh mục" },
     { to: "/admin/reports", icon: BarChart3, label: "Báo cáo" },
     { to: "/admin/reviews", icon: MessageSquare, label: "Đánh giá" },

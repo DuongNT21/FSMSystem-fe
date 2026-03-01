@@ -1,4 +1,4 @@
-import React from "react";;
+import React from "react";
 import { Navigate, useRoutes } from "react-router-dom";
 import { CustomerLayout } from "../layouts/CustomerLayout/CustomerLayout";
 import { HomePage } from "../pages/HomePage";
@@ -15,11 +15,15 @@ import { CustomerGuard } from "../guards/CustomerGuard";
 import { RoleBasedGuard } from "../guards/RoleBasedGuard";
 import { StaffLayout } from "../layouts/StaffLayout/StaffLayout";
 import TestAdminPage from "../pages/admin/TestPage";
+import InventoryPage from "../pages/admin/inventory/InventoryPage";
+import InventoryLogPage from "../pages/admin/inventory/InventoryLogPage";
+import CreateBatchPage from "../pages/admin/inventory/CreateBatchPage";
+import CategoryDetail from "../pages/admin/category/CategoryDetail";
 import { ShopLayout } from "../layouts/ShopLayout/ShopLayout";
 import { BouquetCreateLayout } from "../layouts/BouquetCreateLayout/BouquetCreateLayout";
 // import { BouquetCreatePage } from "../pages/bouquetCreate/BouquetCreatePage";
 import { AdminProductList } from "../pages/admin/AdminProductList.jsx";
-import {AdminPromotionList} from "../pages/admin/AdminPromotionList.jsx";
+import { AdminPromotionList } from "../pages/admin/AdminPromotionList.jsx";
 import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
 import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
 import CategoryDetail from "../pages/admin/category/CategoryDetail";
@@ -30,7 +34,7 @@ export const AppRoutes = () =>
       path: "/login",
       element: (
         <GuestGuard>
-          <LoginPage/>
+          <LoginPage />
         </GuestGuard>
       ),
     },
@@ -38,7 +42,7 @@ export const AppRoutes = () =>
       path: "/register",
       element: (
         <GuestGuard>
-          <RegisterPage/>
+          <RegisterPage />
         </GuestGuard>
       ),
     },
@@ -66,12 +70,14 @@ export const AppRoutes = () =>
       children: [
         {
           index: true,
-          element: <Navigate to="/admin/test" replace />,
+          element: <Navigate to="test" replace />,
         },
         {
           path: "test",
           element: <TestAdminPage />,
         },
+
+        // ===== CATEGORY (giữ nguyên code team) =====
         {
           path: "products",
           element: <AdminProductList />,
@@ -79,6 +85,18 @@ export const AppRoutes = () =>
         {
           path: "promotions",
           element: <AdminPromotionList />,
+        },
+        {
+          path: "inventory",
+          element: <InventoryPage />,
+        },
+        {
+          path: "inventory/:id/logs",
+          element: <InventoryLogPage />,
+        },
+        {
+          path: "inventory/create",
+          element: <CreateBatchPage />,
         },
       ],
     },
@@ -90,22 +108,10 @@ export const AppRoutes = () =>
         </RoleBasedGuard>
       ),
       children: [
-        {
-          index: true,
-          element: <Navigate to="list" replace />,
-        },
-        {
-          path: "list",
-          element: <ListCategories />,
-        },
-        {
-          path: "create",
-          element: <CreateCategory />,
-        },
-        {
-          path: ":id",
-          element: <CategoryDetail />,
-        },
+        { index: true, element: <Navigate to="list" replace /> },
+        { path: "list", element: <ListCategories /> },
+        { path: "create", element: <CreateCategory /> },
+        { path: ":id", element: <CategoryDetail /> },
       ],
     },
     {
@@ -132,19 +138,29 @@ export const AppRoutes = () =>
     },
     {
       path: "/shop",
-      element: <ShopLayout/>,
+      element: <ShopLayout />,
+      children: [
+        { index: true, element: <CustomerProductList /> },
+        // { path: "create", element: <CreateProduct /> }, // "/shop/create"
+        // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+      ],
+    },
+    {
+      path: "/shop/create",
+      element: <BouquetCreateLayout />,
+      // element: <ShopLayout />,
       children: [
         { index: true, element: <CustomerProductList /> },
         { path: ":id", element: <CustomerProductDetail /> },
       ],
     },
-    // {
-    //   path: "/shop/create",
-    //   element: <BouquetCreateLayout/>,
-    //   children: [
-    //     { index: true, element: <BouquetCreatePage /> },
-    //     // { path: "create", element: <CreateProduct /> }, // "/shop/create"
-    //     // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
-    //   ],
-    // },
   ]);
+// {
+//   path: "/shop/create",
+//   element: <BouquetCreateLayout/>,
+//   children: [
+//     { index: true, element: <BouquetCreatePage /> },
+//     // { path: "create", element: <CreateProduct /> }, // "/shop/create"
+//     // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+//   ],
+// },
