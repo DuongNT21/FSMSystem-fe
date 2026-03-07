@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, CloudUpload, Trash2, Plus } from "lucide-react";
 import { bouquetApi, materialApi, categoryApi } from "../../apis/flowerApi";
 
@@ -20,13 +20,24 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [materialError, setMaterialError] = useState("");
   const [categoryError, setCategoryError] = useState("");
+  const [costData, setCostData] = useState(null);
+  const [costLoading, setCostLoading] = useState(false);
 
   useEffect(() => {
     const fetchMaterials = async () => {
       try {
         const response = await materialApi.getAll({ size: 100 });
         const d = response?.data;
-        setAllMaterials(Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : []);
+        const list = Array.isArray(d)
+          ? d
+          : Array.isArray(d?.data?.items)
+          ? d.data.items
+          : Array.isArray(d?.data)
+          ? d.data
+          : Array.isArray(d?.items)
+          ? d.items
+          : [];
+        setAllMaterials(list);
       } catch (error) {
         console.error("Error fetching materials:", error);
       }
@@ -59,10 +70,10 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         status: bouquet.status || 1,
         description: bouquet.description || "",
         categoryId: bouquet.category?.id || "",
-        materials: bouquet.bouquetsMaterials?.map(m => ({
-          id: m.materialId,
+        materials: (bouquet.bouquetsMaterials ?? []).map(m => ({
+          name: m.rawMaterialName,
           quantity: m.quantity
-        })) || []
+        }))
       });
       setExistingImages(bouquet.images?.map(img => ({ id: img.id, image: img.image, publicId: img.publicId })) || []);
     } else {
@@ -79,6 +90,14 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     setDeletedPublicIds([]);
     setSelectedImages([]);
     setNewImagePreviews([]);
+    setCostData(null);
+    if (bouquet?.id) {
+      setCostLoading(true);
+      bouquetApi.getCost(bouquet.id)
+        .then(res => setCostData(res?.data ?? res ?? null))
+        .catch(() => setCostData(null))
+        .finally(() => setCostLoading(false));
+    }
   }, [bouquet]);
 
   const handleInputChange = (e) => {
@@ -88,26 +107,26 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
 
   const handleAddMaterial = (materialId) => {
     if (!materialId) return;
-    const id = parseInt(materialId);
-    if (formData.materials.find(m => m.id === id)) return;
-    
+    const mat = allMaterials.find(m => Number(m.id) === parseInt(materialId));
+    if (!mat) return;
+    if (formData.materials.find(m => m.name === mat.name)) return;
     setFormData({
       ...formData,
-      materials: [...formData.materials, { id, quantity: 1 }]
+      materials: [...formData.materials, { name: mat.name, quantity: 1 }]
     });
   };
 
-  const handleUpdateMaterialQty = (id, qty) => {
+  const handleUpdateMaterialQty = (name, qty) => {
     setFormData({
       ...formData,
-      materials: formData.materials.map(m => m.id === id ? { ...m, quantity: parseInt(qty) || 1 } : m)
+      materials: formData.materials.map(m => m.name === name ? { ...m, quantity: parseInt(qty) || 1 } : m)
     });
   };
 
-  const handleRemoveMaterial = (id) => {
+  const handleRemoveMaterial = (name) => {
     setFormData({
       ...formData,
-      materials: formData.materials.filter(m => m.id !== id)
+      materials: formData.materials.filter(m => m.name !== name)
     });
   };
 
@@ -143,6 +162,14 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     }
   };
 
+  const totalMaterialCost = useMemo(() => {
+    return formData.materials.reduce((sum, m) => {
+      const mat = allMaterials.find(am => am.name === m.name);
+      const unitPrice = mat?.importPrice ?? mat?.price ?? 0;
+      return sum + unitPrice * m.quantity;
+    }, 0);
+  }, [formData.materials, allMaterials]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -158,7 +185,9 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         status: parseInt(formData.status),
         description: formData.description,
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-        materials: formData.materials.map(({ id, quantity }) => ({ id, quantity }))
+        materials: formData.materials
+          .map(m => ({ id: allMaterials.find(am => am.name === m.name)?.id, quantity: m.quantity }))
+          .filter(m => m.id != null)
       };
       if (bouquet && deletedPublicIds.length > 0) {
         requestPayload.deleteImages = deletedPublicIds;
@@ -226,11 +255,22 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700">Giá bán (VND)</label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-semibold text-slate-700">Giá bán (VND)</label>
+                  {(costData?.totalCost > 0 || totalMaterialCost > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, price: costData?.totalCost ?? totalMaterialCost }))}
+                      className="text-xs text-rose-600 font-semibold hover:underline"
+                    >
+                      Áp dụng giá vật tư: {new Intl.NumberFormat("vi-VN").format(costData?.totalCost ?? totalMaterialCost)} đ
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
-                  <input 
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none" 
-                    placeholder="0" 
+                  <input
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none"
+                    placeholder="0"
                     type="number"
                     name="price"
                     value={formData.price}
@@ -268,31 +308,42 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                     <thead>
                       <tr className="border-b border-slate-200">
                         <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500">Tên vật tư</th>
-                        <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-32">Số lượng</th>
-                        <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-16 text-center">Xóa</th>
+                        <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-28 text-right">Đơn giá</th>
+                        <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-24">Số lượng</th>
+                        <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-28 text-right">Thành tiền</th>
+                        <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-12 text-center">Xóa</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {formData.materials.map((m) => {
-                        const materialInfo = allMaterials.find(am => am.id === m.id);
+                        const costRow = costData?.breakdown?.find(b => b.rawMaterialName === m.name);
+                        const matInfo = allMaterials.find(am => am.name === m.name);
+                        const unitPrice = costRow?.unitPrice ?? matInfo?.importPrice ?? matInfo?.price ?? 0;
+                        const lineTotal = unitPrice * m.quantity;
                         return (
-                          <tr key={m.id}>
+                          <tr key={m.name}>
                             <td className="px-4 py-3">
-                              <span className="text-sm font-medium text-slate-700">{materialInfo?.name ?? m.name}</span>
+                              <span className="text-sm font-medium text-slate-700">{m.name}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right text-xs text-slate-500 font-mono">
+                              {unitPrice > 0 ? new Intl.NumberFormat("vi-VN").format(unitPrice) : <span className="italic text-slate-300">—</span>}
                             </td>
                             <td className="px-4 py-3">
-                              <input 
-                                className="w-full px-3 py-1.5 text-sm rounded border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all" 
-                                min="1" 
-                                type="number" 
+                              <input
+                                className="w-full px-3 py-1.5 text-sm rounded border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all"
+                                min="1"
+                                type="number"
                                 value={m.quantity}
-                                onChange={(e) => handleUpdateMaterialQty(m.id, e.target.value)}
+                                onChange={(e) => handleUpdateMaterialQty(m.name, e.target.value)}
                               />
                             </td>
+                            <td className="px-4 py-3 text-right text-xs font-semibold text-slate-600 font-mono">
+                              {unitPrice > 0 ? new Intl.NumberFormat("vi-VN").format(lineTotal) : <span className="italic text-slate-300">—</span>}
+                            </td>
                             <td className="px-4 py-3 text-center">
-                              <button 
+                              <button
                                 type="button"
-                                onClick={() => handleRemoveMaterial(m.id)}
+                                onClick={() => handleRemoveMaterial(m.name)}
                                 className="text-slate-400 hover:text-rose-500 transition-colors"
                               >
                                 <Trash2 size={18} />
@@ -303,6 +354,19 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                       })}
                     </tbody>
                   </table>
+                  {costLoading && (
+                    <div className="px-4 py-3 text-xs text-slate-400 italic border-t border-slate-100">Đang tính chi phí...</div>
+                  )}
+                  {!costLoading && (costData?.totalCost > 0 || totalMaterialCost > 0) && (
+                    <div className="px-4 py-2.5 bg-rose-50 border-t border-rose-100 flex justify-between items-center">
+                      <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
+                        {costData ? "Tổng chi phí nguyên liệu" : "Ước tính chi phí vật tư"}
+                      </span>
+                      <span className="text-sm font-bold text-rose-600 font-mono">
+                        {new Intl.NumberFormat("vi-VN").format(costData?.totalCost ?? totalMaterialCost)} đ
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -262,7 +262,7 @@ export const AdminProductList = () => {
                       <div className="flex flex-wrap gap-1">
                         {b.bouquetsMaterials?.slice(0, 2).map((m, idx) => (
                           <span key={idx} className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded">
-                            Vật tư #{m.materialId} (x{m.quantity})
+                            {m.rawMaterialName} (x{m.quantity})
                           </span>
                         ))}
                         {b.bouquetsMaterials?.length > 2 && (

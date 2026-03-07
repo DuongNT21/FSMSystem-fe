@@ -24,6 +24,7 @@ export const bouquetApi = {
   get: (params) => axiosClient.get("/bouquets/get", { params }),
   getById: (id) => axiosClient.get("/bouquets/getById", { params: { id } }),
   delete: (id) => axiosClient.delete("/bouquets/delete", { params: { id } }),
+  getCost: (id) => axiosClient.get("/bouquets/cost", { params: { id } }),
 };
 
 export const promotionApi = {
