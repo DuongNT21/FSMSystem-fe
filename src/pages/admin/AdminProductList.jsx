@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter } from "lucide-react";
-import { bouquetApi, materialApi } from "../../apis/flowerApi";
+import { bouquetApi, materialApi, categoryApi } from "../../apis/flowerApi";
 import { BouquetModal } from "./BouquetModal";
 
 export const AdminProductList = () => {
   const [bouquets, setBouquets] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -17,7 +18,8 @@ export const AdminProductList = () => {
     name: "",
     minPrice: "",
     maxPrice: "",
-    materialId: ""
+    materialId: "",
+    categoryId: ""
   });
 
   const fetchBouquets = async () => {
@@ -53,12 +55,30 @@ export const AdminProductList = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryApi.getAll({ size: 100 });
+      const payload = response?.data;
+      const list = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data?.items)
+        ? payload.data.items
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : [];
+      setCategories(list);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
   useEffect(() => {
     fetchBouquets();
   }, [page]);
 
   useEffect(() => {
     fetchMaterials();
+    fetchCategories();
   }, []);
 
   const handleApplyFilters = () => {
@@ -67,7 +87,7 @@ export const AdminProductList = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters({ name: "", minPrice: "", maxPrice: "", materialId: "" });
+    setFilters({ name: "", minPrice: "", maxPrice: "", materialId: "", categoryId: "" });
     setPage(0);
     // We need to wait for state update or pass it directly
     setTimeout(fetchBouquets, 0);
@@ -109,7 +129,7 @@ export const AdminProductList = () => {
 
       {/* Filters */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 mb-8 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tìm kiếm tên bó hoa</label>
             <div className="relative">
@@ -145,7 +165,7 @@ export const AdminProductList = () => {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vật tư (Materials)</label>
-            <select 
+            <select
               className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-rose-500 focus:border-rose-500 transition-colors"
               value={filters.materialId}
               onChange={(e) => setFilters({...filters, materialId: e.target.value})}
@@ -153,6 +173,19 @@ export const AdminProductList = () => {
               <option value="">Tất cả vật tư</option>
               {materials.map(m => (
                 <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh mục</label>
+            <select
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-rose-500 focus:border-rose-500 transition-colors"
+              value={filters.categoryId}
+              onChange={(e) => setFilters({...filters, categoryId: e.target.value})}
+            >
+              <option value="">Tất cả danh mục</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -180,6 +213,7 @@ export const AdminProductList = () => {
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Hình ảnh</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tên sản phẩm</th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Danh mục</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Giá niêm yết</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Vật tư dùng</th>
               <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
@@ -189,11 +223,11 @@ export const AdminProductList = () => {
           <tbody className="divide-y divide-slate-100">
             {loading ? (
               <tr>
-                <td colSpan="6" className="px-6 py-10 text-center text-slate-400">Đang tải dữ liệu...</td>
+                <td colSpan="7" className="px-6 py-10 text-center text-slate-400">Đang tải dữ liệu...</td>
               </tr>
             ) : bouquets.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-10 text-center text-slate-400">Không tìm thấy sản phẩm nào.</td>
+                <td colSpan="7" className="px-6 py-10 text-center text-slate-400">Không tìm thấy sản phẩm nào.</td>
               </tr>
             ) : (
               bouquets.map((b) => {
@@ -211,6 +245,15 @@ export const AdminProductList = () => {
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-800">{b.name}</div>
                       <div className="text-xs text-slate-500 mt-1">ID: {b.id}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {b.category ? (
+                        <span className="bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                          {b.category.name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-700">
                       {b.price.toLocaleString()} VND

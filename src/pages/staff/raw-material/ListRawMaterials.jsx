@@ -8,9 +8,7 @@ import {
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
-  Package,
   Layers,
-  CircleDollarSign,
 } from "lucide-react";
 import { rawMaterialService } from "../../../services/rawMaterialService";
 
@@ -42,16 +40,8 @@ const ListRawMaterials = () => {
   // 1. Tính toán thống kê chi tiết
   const stats = useMemo(() => {
     return items.reduce(
-      (acc, item) => {
-        const qty = Number(item.quantity) || 0;
-        const price = Number(item.importPrice) || 0;
-        return {
-          totalTypes: acc.totalTypes + 1,
-          totalQuantity: acc.totalQuantity + qty,
-          totalValue: acc.totalValue + qty * price,
-        };
-      },
-      { totalTypes: 0, totalQuantity: 0, totalValue: 0 },
+      (acc) => ({ totalTypes: acc.totalTypes + 1 }),
+      { totalTypes: 0 },
     );
   }, [items]);
 
@@ -97,13 +87,6 @@ const ListRawMaterials = () => {
     );
   };
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -122,37 +105,9 @@ const ListRawMaterials = () => {
             <Layers size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Số loại hoa</p>
+            <p className="text-sm text-gray-500 font-medium">Số loại nguyên liệu</p>
             <p className="text-2xl font-bold text-gray-800">
               {stats.totalTypes} loại
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-            <Package size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">
-              Tổng số lượng tồn
-            </p>
-            <p className="text-2xl font-bold text-gray-800">
-              {stats.totalQuantity.toLocaleString()} hoa
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
-            <CircleDollarSign size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">
-              Tổng giá trị kho
-            </p>
-            <p className="text-2xl font-bold text-gray-800">
-              {formatCurrency(stats.totalValue)}
             </p>
           </div>
         </div>
@@ -198,22 +153,6 @@ const ListRawMaterials = () => {
                     Tên nguyên liệu <SortIcon field="name" />
                   </div>
                 </th>
-                <th
-                  onClick={() => handleSort("quantity")}
-                  className="p-4 text-center text-sm font-bold text-gray-700 cursor-pointer hover:bg-gray-100 select-none transition-colors"
-                >
-                  <div className="flex items-center justify-center">
-                    Số lượng <SortIcon field="quantity" />
-                  </div>
-                </th>
-                <th
-                  onClick={() => handleSort("importPrice")}
-                  className="p-4 text-center text-sm font-bold text-gray-700 cursor-pointer hover:bg-gray-100 select-none transition-colors"
-                >
-                  <div className="flex items-center justify-center">
-                    Giá nhập <SortIcon field="importPrice" />
-                  </div>
-                </th>
                 <th className="p-4 text-center text-sm font-bold text-gray-700">
                   Hành động
                 </th>
@@ -223,7 +162,7 @@ const ListRawMaterials = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="p-10 text-center text-gray-500">
+                  <td colSpan="2" className="p-10 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
                       Đang tải dữ liệu...
@@ -232,7 +171,7 @@ const ListRawMaterials = () => {
                 </tr>
               ) : paged.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="p-10 text-center text-gray-500">
+                  <td colSpan="2" className="p-10 text-center text-gray-500">
                     Không tìm thấy nguyên liệu nào khớp với tìm kiếm
                   </td>
                 </tr>
@@ -244,20 +183,6 @@ const ListRawMaterials = () => {
                   >
                     <td className="p-4 text-sm text-gray-700 font-semibold">
                       {it.name}
-                    </td>
-                    <td className="p-4 text-center text-sm">
-                      <span
-                        className={`px-2.5 py-1 rounded-full font-medium ${
-                          it.quantity < 10
-                            ? "bg-red-100 text-red-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {it.quantity}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center text-sm text-gray-600 font-mono">
-                      {formatCurrency(it.importPrice)}
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center gap-2">

@@ -1,11 +1,7 @@
 import { rawMaterialApi } from "../apis/rawMaterialApi";
 import api from "../apis/axiosClient";
-const createRawMaterial = async ({ name, quantity, importPrice }) => {
-  return await rawMaterialApi.createRawMaterial({
-    name,
-    quantity,
-    importPrice,
-  });
+const createRawMaterial = async ({ name }) => {
+  return await rawMaterialApi.createRawMaterial({ name });
 };
 
 const getListRawMaterials = async (params) => {
@@ -16,12 +12,8 @@ const getRawMaterialById = async (id) => {
   return await rawMaterialApi.getRawMaterialById(id);
 };
 
-const updateRawMaterial = async (id, { name, quantity, importPrice }) => {
-  return await rawMaterialApi.updateRawMaterial(id, {
-    name,
-    quantity,
-    importPrice,
-  });
+const updateRawMaterial = async (id, { name }) => {
+  return await rawMaterialApi.updateRawMaterial(id, { name });
 };
 
 export const getAllRawMaterial = () =>
