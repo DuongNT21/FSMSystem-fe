@@ -47,11 +47,51 @@ const CreateBatchPage = () => {
   }, []);
 
   const handleSubmit = async () => {
+    const {
+      rawMaterialId,
+      importDate,
+      expireDate,
+      importPrice,
+      originalQuantity,
+    } = form;
+
+    // Required fields validation
+    if (
+      !rawMaterialId ||
+      !importDate ||
+      !expireDate ||
+      importPrice === "" ||
+      originalQuantity === ""
+    ) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    // Date validation
+    if (new Date(expireDate) < new Date(importDate)) {
+      alert("Expire date cannot be before import date.");
+      return;
+    }
+
+    // Number validation
+    if (Number(importPrice) < 0) {
+      alert("Import price cannot be negative.");
+      return;
+    }
+
+    if (Number(originalQuantity) < 0) {
+      alert("Quantity cannot be negative.");
+      return;
+    }
+
     try {
-      await createBatch(form);
+      await createBatch({
+        ...form,
+        importPrice: Number(importPrice),
+        originalQuantity: Number(originalQuantity),
+      });
 
       alert("Create batch success 🚀");
-
       navigate("/admin/inventory");
     } catch (err) {
       console.error(err);
@@ -137,10 +177,12 @@ const CreateBatchPage = () => {
           <div>
             <label style={labelStyle}>Import Price</label>
             <input
+              type="number"
               name="importPrice"
               placeholder="Enter import price"
               value={form.importPrice}
               onChange={handleChange}
+              min="0"
               style={inputStyle}
             />
           </div>
@@ -148,10 +190,12 @@ const CreateBatchPage = () => {
           <div>
             <label style={labelStyle}>Quantity</label>
             <input
+              type="number"
               name="originalQuantity"
               placeholder="Enter quantity"
               value={form.originalQuantity}
               onChange={handleChange}
+              min="0"
               style={inputStyle}
             />
           </div>
