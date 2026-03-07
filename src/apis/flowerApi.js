@@ -5,6 +5,10 @@ export const materialApi = {
   getAll: (params) => axiosClient.get("/material", { params }),
 };
 
+export const categoryApi = {
+  getAll: (params) => axiosClient.get("/category", { params }),
+};
+
 export const bouquetApi = {
   create: (formData) => {
     // formData should be a FormData object for multipart/form-data

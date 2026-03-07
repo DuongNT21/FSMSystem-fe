@@ -5,8 +5,6 @@ const createRawMaterial = async (data) => {
   return {
     id: response.data.id,
     name: response.data.name,
-    quantity: response.data.quantity,
-    importPrice: response.data.importPrice
   }
 }
 
@@ -27,8 +25,6 @@ const getListRawMaterials = async (param) => {
   return list.map((item) => ({
     id: item.id,
     name: item.name,
-    quantity: item.quantity ?? 0,
-    importPrice: item.importPrice ?? 0,
   }));
 };
 
@@ -38,8 +34,6 @@ const getRawMaterialById = async (id) => {
     return {
       id: response.data.id,
       name: response.data.name,
-      quantity: response.data.quantity,
-      importPrice: response.data.importPrice
     }
 }
 
@@ -48,8 +42,6 @@ const updateRawMaterial = async (id, data) => {
     return {
       id: response.data.id,
       name: response.data.name,
-      quantity: response.data.quantity,
-      importPrice: response.data.importPrice
     }
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, CloudUpload, Trash2, Plus } from "lucide-react";
-import { bouquetApi, materialApi } from "../../apis/flowerApi";
+import { bouquetApi, materialApi, categoryApi } from "../../apis/flowerApi";
 
 export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -8,14 +8,18 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     price: "",
     status: 1,
     description: "",
+    categoryId: "",
     materials: []
   });
   const [allMaterials, setAllMaterials] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [existingImages, setExistingImages] = useState([]); // { id, image, publicId }
   const [deletedPublicIds, setDeletedPublicIds] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
   const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [materialError, setMaterialError] = useState("");
+  const [categoryError, setCategoryError] = useState("");
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -27,7 +31,24 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         console.error("Error fetching materials:", error);
       }
     };
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryApi.getAll({ size: 100 });
+        const payload = response?.data;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data?.items)
+          ? payload.data.items
+          : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+        setAllCategories(list);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
     fetchMaterials();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -37,6 +58,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         price: bouquet.price || "",
         status: bouquet.status || 1,
         description: bouquet.description || "",
+        categoryId: bouquet.category?.id || "",
         materials: bouquet.bouquetsMaterials?.map(m => ({
           id: m.materialId,
           quantity: m.quantity
@@ -49,6 +71,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         price: "",
         status: 1,
         description: "",
+        categoryId: "",
         materials: []
       });
       setExistingImages([]);
@@ -123,6 +146,8 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMaterialError("");
+    setCategoryError("");
 
     try {
       const formDataToSend = new FormData();
@@ -132,7 +157,8 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         price: parseFloat(formData.price),
         status: parseInt(formData.status),
         description: formData.description,
-        materials: formData.materials
+        categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
+        materials: formData.materials.map(({ id, quantity }) => ({ id, quantity }))
       };
       if (bouquet && deletedPublicIds.length > 0) {
         requestPayload.deleteImages = deletedPublicIds;
@@ -155,7 +181,14 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
       onSuccess();
     } catch (error) {
       console.error("Error saving bouquet:", error);
-      alert("Lỗi khi lưu sản phẩm");
+      const msg = error?.response?.data?.message || "";
+      if (error?.response?.status === 400 && msg.toLowerCase().includes("raw material")) {
+        setMaterialError(msg);
+      } else if (error?.response?.status === 400 && msg.toLowerCase().includes("category")) {
+        setCategoryError(msg);
+      } else {
+        alert("Lỗi khi lưu sản phẩm");
+      }
     } finally {
       setLoading(false);
     }
@@ -211,6 +244,11 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
 
             <div className="space-y-3">
               <label className="block text-sm font-semibold text-slate-700">Thành phần vật tư</label>
+              {materialError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+                  {materialError}
+                </div>
+              )}
               <div className="flex gap-2">
                 <select 
                   className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none"
@@ -219,7 +257,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                 >
                   <option value="">Chọn vật tư để thêm...</option>
                   {allMaterials.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} (Kho: {m.quantity})</option>
+                    <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>
               </div>
@@ -240,8 +278,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                         return (
                           <tr key={m.id}>
                             <td className="px-4 py-3">
-                              <span className="text-sm font-medium text-slate-700">{materialInfo?.name || `Vật tư #${m.id}`}</span>
-                              <div className="text-[11px] text-slate-400 italic">Tồn kho: {materialInfo?.quantity || 0}</div>
+                              <span className="text-sm font-medium text-slate-700">{materialInfo?.name ?? m.name}</span>
                             </td>
                             <td className="px-4 py-3">
                               <input 
@@ -283,17 +320,36 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
               ></textarea>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700">Trạng thái kinh doanh</label>
-              <select 
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none cursor-pointer"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-              >
-                <option value="1">Đang bán (On Sale)</option>
-                <option value="0">Tạm ngưng (Stopped)</option>
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Trạng thái kinh doanh</label>
+                <select
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none cursor-pointer"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                >
+                  <option value="1">Đang bán (On Sale)</option>
+                  <option value="0">Tạm ngưng (Stopped)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Danh mục</label>
+                <select
+                  className={`w-full px-4 py-2.5 rounded-lg border ${categoryError ? "border-red-400" : "border-slate-200"} focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none cursor-pointer`}
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={handleInputChange}
+                >
+                  <option value="">-- Chọn danh mục --</option>
+                  {allCategories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {categoryError && (
+                  <p className="text-red-500 text-xs font-medium">{categoryError}</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">

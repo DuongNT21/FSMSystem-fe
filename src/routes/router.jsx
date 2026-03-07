@@ -26,6 +26,7 @@ import { AdminProductList } from "../pages/admin/AdminProductList.jsx";
 import { AdminPromotionList } from "../pages/admin/AdminPromotionList.jsx";
 import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
 import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
+import CategoryDetail from "../pages/admin/category/CategoryDetail";
 
 export const AppRoutes = () =>
   useRoutes([
@@ -141,7 +142,7 @@ export const AppRoutes = () =>
       children: [
         { index: true, element: <CustomerProductList /> },
         // { path: "create", element: <CreateProduct /> }, // "/shop/create"
-        // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
+        { path: ":id", element: <CustomerProductDetail /> }, // "/shop/123"
       ],
     },
     {
