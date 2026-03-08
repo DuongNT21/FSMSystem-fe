@@ -39,10 +39,9 @@ const ListRawMaterials = () => {
 
   // 1. Tính toán thống kê chi tiết
   const stats = useMemo(() => {
-    return items.reduce(
-      (acc) => ({ totalTypes: acc.totalTypes + 1 }),
-      { totalTypes: 0 },
-    );
+    return items.reduce((acc) => ({ totalTypes: acc.totalTypes + 1 }), {
+      totalTypes: 0,
+    });
   }, [items]);
 
   const handleSort = (field) => {
@@ -59,7 +58,11 @@ const ListRawMaterials = () => {
     let data = [...items];
     const q = query.trim().toLowerCase();
     if (q) {
-      data = data.filter((i) => (i.name || "").toLowerCase().includes(q));
+      data = data.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.quantity.toString().includes(q),
+      );
     }
     if (sortField) {
       data.sort((a, b) => {
@@ -105,7 +108,9 @@ const ListRawMaterials = () => {
             <Layers size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Số loại nguyên liệu</p>
+            <p className="text-sm text-gray-500 font-medium">
+              Số loại nguyên liệu
+            </p>
             <p className="text-2xl font-bold text-gray-800">
               {stats.totalTypes} loại
             </p>
@@ -153,6 +158,14 @@ const ListRawMaterials = () => {
                     Tên nguyên liệu <SortIcon field="name" />
                   </div>
                 </th>
+                <th
+                  onClick={() => handleSort("quantity")}
+                  className="p-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-gray-100 select-none transition-colors"
+                >
+                  <div className="flex items-center">
+                    Số lượng <SortIcon field="quantity" />
+                  </div>
+                </th>
                 <th className="p-4 text-center text-sm font-bold text-gray-700">
                   Hành động
                 </th>
@@ -162,7 +175,7 @@ const ListRawMaterials = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="2" className="p-10 text-center text-gray-500">
+                  <td colSpan="3" className="p-10 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
                       Đang tải dữ liệu...
@@ -171,7 +184,7 @@ const ListRawMaterials = () => {
                 </tr>
               ) : paged.length === 0 ? (
                 <tr>
-                  <td colSpan="2" className="p-10 text-center text-gray-500">
+                  <td colSpan="3" className="p-10 text-center text-gray-500">
                     Không tìm thấy nguyên liệu nào khớp với tìm kiếm
                   </td>
                 </tr>
@@ -183,6 +196,9 @@ const ListRawMaterials = () => {
                   >
                     <td className="p-4 text-sm text-gray-700 font-semibold">
                       {it.name}
+                    </td>
+                    <td className="p-4 text-sm text-gray-700 font-semibold">
+                      {it.quantity}
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center gap-2">

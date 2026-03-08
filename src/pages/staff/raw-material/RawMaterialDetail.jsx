@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Edit3,
-  Save,
-  Trash2,
-  Tag,
-} from "lucide-react";
+import { ArrowLeft, Edit3, Save, Trash2, Tag } from "lucide-react";
 import { rawMaterialService } from "../../../services/rawMaterialService";
 
 const RawMaterialDetail = () => {
@@ -14,7 +8,7 @@ const RawMaterialDetail = () => {
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: "" });
+  const [form, setForm] = useState({ name: "", quantity: 0 });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -27,6 +21,7 @@ const RawMaterialDetail = () => {
         setItem(data);
         setForm({
           name: data.name,
+          quantity: data.quantity,
         });
       } finally {
         setLoading(false);
@@ -39,6 +34,7 @@ const RawMaterialDetail = () => {
     setErrors({});
     const errs = {};
     if (!form.name.trim()) errs.name = "Tên là bắt buộc";
+    if (form.quantity <= 0) errs.quantity = "Số lượng phải lớn hơn 0";
 
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -49,6 +45,7 @@ const RawMaterialDetail = () => {
       setSubmitting(true);
       const res = await rawMaterialService.updateRawMaterial(id, {
         name: form.name.trim(),
+        quantity: form.quantity,
       });
       const updatedData = res?.data?.data ?? res?.data ?? res;
       setItem(updatedData);
@@ -118,6 +115,30 @@ const RawMaterialDetail = () => {
               )}
             </div>
 
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <Tag className="w-3.5 h-3.5 text-rose-500" /> Số lượng
+              </label>
+              {editing ? (
+                <input
+                  type="number"
+                  value={form.quantity}
+                  onChange={(e) =>
+                    setForm({ ...form, quantity: parseInt(e.target.value, 10) })
+                  }
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-rose-50 focus:border-rose-400 transition-all outline-none font-medium"
+                />
+              ) : (
+                <div className="px-4 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl font-semibold text-gray-700">
+                  {item.quantity}
+                </div>
+              )}
+              {errors.quantity && (
+                <p className="text-red-500 text-[11px] italic font-medium">
+                  {errors.quantity}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex items-center gap-3">
