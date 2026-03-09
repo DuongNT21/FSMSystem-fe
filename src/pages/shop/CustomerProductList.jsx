@@ -10,6 +10,8 @@ import {
 import { bouquetApi, materialApi } from "../../apis/flowerApi";
 import { Link } from "react-router-dom";
 import { categoryService } from "../../services/categoryService";
+import { addToCart } from "../../utils/cartUtils";
+import { toast } from "react-toastify";
 
 export const CustomerProductList = () => {
   const [bouquets, setBouquets] = useState([]);
@@ -29,10 +31,18 @@ export const CustomerProductList = () => {
   const fetchBouquets = async () => {
     setLoading(true);
     try {
+      console.log("Fetching bouquets with request", {
+        page,
+        size: 9,
+        status: 1,
+        categoryId: filters.categoryId,
+        ...filters,
+      });
       const response = await bouquetApi.get({
         page,
         size: 9,
         status: 1, // Only show active ones
+        categoryId: filters.categoryId,
         ...filters,
       });
       setBouquets(response?.data?.map((item) => item.bouquet) ?? []);
@@ -84,6 +94,14 @@ export const CustomerProductList = () => {
   const handleApplyFilters = () => {
     setPage(0);
     fetchBouquets();
+  };
+
+  const handleAddToCart = (product) => {
+    addToCart(product, 1);
+    toast.success(`${product.name} đã được thêm vào giỏ hàng!`, {
+      position: "bottom-right",
+      autoClose: 2000,
+    });
   };
 
   return (
@@ -361,7 +379,10 @@ export const CustomerProductList = () => {
                             {b.price.toLocaleString()}đ
                           </p>
                         </div>
-                        <button className="size-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 hover:bg-slate-900 transition-colors">
+                        <button
+                          onClick={() => handleAddToCart(b)}
+                          className="size-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 hover:bg-slate-900 transition-colors"
+                        >
                           <ShoppingCart size={20} />
                         </button>
                       </div>
