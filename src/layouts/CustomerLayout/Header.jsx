@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
 import {
   ShoppingCart,
@@ -11,14 +11,13 @@ import {
   UserCircle,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useCartCount } from "../../hooks/useCartCount";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-
-  // Giả lập số lượng hàng trong giỏ
-  const cartItemCount = 3;
+  const { totalQuantity: cartCount } = useCartCount();
 
   // Class hỗ trợ active link (tô đậm khi đang ở trang đó)
   const navLinkClass = ({ isActive }) =>
@@ -127,9 +126,9 @@ export const Header = () => {
               className="relative text-gray-500 hover:text-rose-500 transition-colors group"
             >
               <ShoppingCart className="w-5 h-5" />
-              {cartItemCount > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center group-hover:bg-rose-600">
-                  {cartItemCount}
+                  {cartCount}
                 </span>
               )}
             </Link>
@@ -139,9 +138,9 @@ export const Header = () => {
           <div className="md:hidden flex items-center">
             <Link to="/cart" className="relative mr-4 text-gray-600">
               <ShoppingCart className="w-6 h-6" />
-              {cartItemCount > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemCount}
+                  {cartCount}
                 </span>
               )}
             </Link>
