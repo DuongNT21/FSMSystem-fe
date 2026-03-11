@@ -16,6 +16,7 @@ import {
   createOrderFromCart,
 } from "../../utils/cartUtils";
 import { toast } from "react-toastify";
+import { orderService } from "../../services/orderService";
 
 export const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -112,13 +113,24 @@ export const CartPage = () => {
     loadCart();
   };
 
-  const handlePlaceOrder = () => {
-    if (selectedItems.length === 0) {
-      toast.warning("Vui lòng chọn sản phẩm để đặt hàng!", {
-        position: "bottom-right",
-        autoClose: 2000,
-      });
-      return;
+  const handlePlaceOrder = async () => {
+    try {
+      const orderData = {
+        fullName: "John Doe", // Replace with actual user input
+        phoneNumber: "123456789", // Replace with actual user input
+        deliveryAddress: "123 Main St", // Replace with actual user input
+        orderItems: cartItems.map((item) => ({
+          bouquetId: item.id,
+          quantity: item.quantity,
+        })),
+      };
+
+      const response = await orderService.createOrder(orderData);
+      console.log("Order created successfully:", response);
+      alert("Order placed successfully!");
+    } catch (error) {
+      console.error("Failed to place order:", error);
+      alert("Failed to place order. Please try again.");
     }
 
     if (!province || !district || !ward || !street.trim()) {
@@ -169,7 +181,7 @@ export const CartPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Breadcrumb */}
           <nav className="flex text-sm font-medium text-slate-500 mb-8">
@@ -215,7 +227,7 @@ export const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="flex text-sm font-medium text-slate-500 mb-8">
@@ -244,7 +256,7 @@ export const CartPage = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
               {/* Header with Select All */}
-              <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-6 border-b border-slate-200 flex items-center justify-between">
+              <div className="bg-linear-to-r from-slate-50 to-slate-100 p-6 border-b border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <input
                     type="checkbox"
@@ -470,7 +482,7 @@ export const CartPage = () => {
                 <button
                   onClick={handlePlaceOrder}
                   disabled={selectedItems.length === 0}
-                  className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-rose-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-linear-to-r from-rose-500 to-pink-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-rose-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Đặt Hàng ({selectedItems.length})
                 </button>
