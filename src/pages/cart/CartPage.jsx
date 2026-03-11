@@ -23,6 +23,32 @@ export const CartPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
+  const [province, setProvince] = useState("");
+  const [district, setDistrict] = useState("");
+  const [ward, setWard] = useState("");
+  const [street, setStreet] = useState("");
+  const [addressError, setAddressError] = useState("");
+
+  // Simple demo location data
+  const provinces = ["Hà Nội", "Hồ Chí Minh", "Đà Nẵng"];
+  const districts = {
+    "Hà Nội": ["Ba Đình", "Cầu Giấy", "Đống Đa"],
+    "Hồ Chí Minh": ["Quận 1", "Quận 3", "Quận 7"],
+    "Đà Nẵng": ["Hải Châu", "Sơn Trà", "Ngũ Hành Sơn"],
+  };
+
+  const wards = {
+    "Ba Đình": ["Phúc Xá", "Trúc Bạch"],
+    "Cầu Giấy": ["Dịch Vọng", "Nghĩa Đô"],
+    "Đống Đa": ["Láng Hạ", "Khâm Thiên"],
+    "Quận 1": ["Bến Nghé", "Bến Thành"],
+    "Quận 3": ["Phường 6", "Phường 7"],
+    "Quận 7": ["Tân Phú", "Tân Phong"],
+    "Hải Châu": ["Thạch Thang", "Hải Châu I"],
+    "Sơn Trà": ["An Hải Bắc", "Phước Mỹ"],
+    "Ngũ Hành Sơn": ["Mỹ An", "Khuê Mỹ"],
+  };
+
   useEffect(() => {
     loadCart();
   }, []);
@@ -106,6 +132,35 @@ export const CartPage = () => {
       console.error("Failed to place order:", error);
       alert("Failed to place order. Please try again.");
     }
+
+    if (!province || !district || !ward || !street.trim()) {
+      setAddressError("Vui lòng nhập đầy đủ địa chỉ giao hàng!");
+      toast.error("Thiếu thông tin địa chỉ giao hàng", {
+        position: "bottom-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    setAddressError("");
+
+    const itemsToOrder = cartItems.filter((item) =>
+      selectedItems.includes(item.id),
+    );
+    const orderData = createOrderFromCart(itemsToOrder);
+
+    // Show success message
+    toast.success(
+      `Đặt hàng thành công! ${selectedItems.length} sản phẩm. (Kiểm tra console để xem chi tiết order JSON)`,
+      {
+        position: "bottom-right",
+        autoClose: 3000,
+      },
+    );
+
+    // Remove ordered items from cart
+    selectedItems.forEach((id) => removeFromCart(id));
+    loadCart();
   };
 
   const calculateSubtotal = () => {
@@ -357,14 +412,69 @@ export const CartPage = () => {
                 </div>
               </div>
 
-              {/* Total */}
-              <div className="mb-6">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-slate-600 text-sm">Tổng cộng:</span>
-                  <span className="text-4xl font-black bg-linear-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
-                    {calculateTotal().toLocaleString()}₫
-                  </span>
-                </div>
+              {/* Shipping Address */}
+              <div className="mb-6 space-y-3">
+                <h3 className="font-bold text-slate-900">Địa Chỉ Giao Hàng</h3>
+
+                <select
+                  value={province}
+                  onChange={(e) => {
+                    setProvince(e.target.value);
+                    setDistrict("");
+                    setWard("");
+                  }}
+                  className="w-full p-3 border rounded-lg"
+                >
+                  <option value="">Chọn Tỉnh / Thành phố</option>
+                  {provinces.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={district}
+                  onChange={(e) => {
+                    setDistrict(e.target.value);
+                    setWard("");
+                  }}
+                  disabled={!province}
+                  className="w-full p-3 border rounded-lg"
+                >
+                  <option value="">Chọn Quận / Huyện</option>
+                  {(districts[province] || []).map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={ward}
+                  onChange={(e) => setWard(e.target.value)}
+                  disabled={!district}
+                  className="w-full p-3 border rounded-lg"
+                >
+                  <option value="">Chọn Phường / Xã</option>
+                  {(wards[district] || []).map((w) => (
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="Số nhà, tên đường..."
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                />
+
+                {addressError && (
+                  <p className="text-red-500 text-sm">{addressError}</p>
+                )}
               </div>
 
               {/* Buttons */}
