@@ -25,6 +25,7 @@ import { BouquetCreateLayout } from "../layouts/BouquetCreateLayout/BouquetCreat
 import { AdminProductList } from "../pages/admin/AdminProductList.jsx";
 import { AdminPromotionList } from "../pages/admin/AdminPromotionList.jsx";
 import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
+import { PromotionProvider } from "../contexts/PromotionContext.jsx";
 import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
 import { CartPage } from "../pages/cart/CartPage.jsx";
 import OrderPage from "../pages/order/OrderPage.jsx";
@@ -152,7 +153,11 @@ export const AppRoutes = () =>
     },
     {
       path: "/shop",
-      element: <ShopLayout />,
+      element: (
+        <PromotionProvider>
+          <ShopLayout />
+        </PromotionProvider>
+      ),
       children: [
         { index: true, element: <CustomerProductList /> },
         // { path: "create", element: <CreateProduct /> }, // "/shop/create"
@@ -161,4 +166,3 @@ export const AppRoutes = () =>
     },
     
   ]);
-

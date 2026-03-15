@@ -35,4 +35,6 @@ export const promotionApi = {
   update: (data) => axiosClient.put("/promotions", data),
   check: (code, orderValue) => axiosClient.get("/promotions/check", { params: { code, orderValue } }),
   delete: (id) => axiosClient.delete(`/promotions/${id}`),
+  getActive: () => axiosClient.get("/promotions/active"),
 };
+

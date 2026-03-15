@@ -11,13 +11,13 @@ import {
   Plus,
   Minus,
   Share2,
-  Camera,
-  AtSign,
   Send,
+  Gift,
 } from "lucide-react";
 import { bouquetApi } from "../../apis/flowerApi";
 import { reviewService } from "../../services/reviewService";
 import { toast } from "react-toastify";
+import { usePromotion } from "../../contexts/PromotionContext";
 
 export const CustomerProductDetail = () => {
   const { id } = useParams();
@@ -37,6 +37,7 @@ export const CustomerProductDetail = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("newest"); // newest, rating-high, rating-low
   const itemsPerPage = 6;
+  const { activePromotion } = usePromotion() || {};
 
   useEffect(() => {
     const fetchBouquet = async () => {
@@ -153,13 +154,19 @@ export const CustomerProductDetail = () => {
     );
   }
 
+  const originalPrice = bouquet.price;
+  const hasPromotion = activePromotion && activePromotion.discountValue > 0;
+  const discountedPrice = hasPromotion
+    ? originalPrice * (1 - activePromotion.discountValue / 100)
+    : originalPrice;
+
   const images = bouquet.images || [];
   const mainImage =
     images[activeImage]?.image || "https://picsum.photos/800/1000?flower";
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-10">
+      <nav className="flex items-center gap-2 text-sm text-slate-500 mb-10">
         <Link className="hover:text-rose-500 transition-colors" to="/">
           Trang chủ
         </Link>
@@ -206,7 +213,7 @@ export const CustomerProductDetail = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 bg-rose-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wider">
-                Tiết kiệm 20%
+                Tiết kiệm {activePromotion?.discountValue}%
               </span>
               <span className="text-slate-400 text-sm font-medium">
                 Mã: FL-RP-{bouquet.id}
@@ -222,18 +229,44 @@ export const CustomerProductDetail = () => {
                 ))}
               </div>
               <span className="text-sm text-slate-500 font-semibold underline decoration-slate-300 underline-offset-4 cursor-pointer hover:text-rose-500 transition-colors">
-                48 đánh giá
+                {reviews.length} đánh giá
               </span>
             </div>
-            <div className="flex items-baseline gap-4 pt-2">
-              <span className="text-4xl font-black text-rose-500">
-                {bouquet.price.toLocaleString()}đ
-              </span>
-              <span className="text-xl text-slate-400 line-through font-medium">
-                {(bouquet.price * 1.2).toLocaleString()}đ
-              </span>
-            </div>
+            {hasPromotion ? (
+              <div className="flex items-baseline gap-4 pt-2">
+                <span className="text-4xl font-black text-rose-500">
+                  {Math.round(discountedPrice).toLocaleString()}đ
+                </span>
+                <span className="text-xl text-slate-400 line-through font-medium">
+                  {originalPrice.toLocaleString()}đ
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-4 pt-2">
+                <span className="text-4xl font-black text-slate-900">
+                  {originalPrice.toLocaleString()}đ
+                </span>
+              </div>
+            )}
           </div>
+
+          {activePromotion && (
+            <div className="mt-6 p-4 bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Gift className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-bold text-emerald-800">
+                    Special Offer: A site-wide promotion is active!
+                  </p>
+                  <p className="text-sm text-emerald-700 mt-1">
+                    {activePromotion.name}: Use code <span className="font-bold">{activePromotion.code}</span> at checkout.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="border-t border-slate-100 pt-8">
             <h3 className="font-bold text-lg mb-4 text-slate-900">
@@ -254,7 +287,7 @@ export const CustomerProductDetail = () => {
                 >
                   <CheckCircle2 className="text-rose-500" size={16} />
                   <span className="text-[14px] font-medium text-slate-700">
-                    Vật tư #{m.materialId} (Số lượng: {m.quantity})
+                    {m.rawMaterialName} (Số lượng: {m.quantity})
                   </span>
                 </div>
               ))}
