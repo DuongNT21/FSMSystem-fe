@@ -30,6 +30,7 @@ export const bouquetApi = {
 export const promotionApi = {
   getAll: (params) => axiosClient.get("/promotions", { params }),
   create: (data) => axiosClient.post("/promotions", data),
+  update: (data) => axiosClient.put("/promotions", data),
   check: (code, orderValue) => axiosClient.get("/promotions/check", { params: { code, orderValue } }),
   delete: (id) => axiosClient.delete(`/promotions/${id}`),
 };

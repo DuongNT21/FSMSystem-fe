@@ -159,22 +159,6 @@ export const AppRoutes = () =>
         { path: ":id", element: <CustomerProductDetail /> }, // "/shop/123"
       ],
     },
-    {
-      path: "/shop/create",
-      element: <BouquetCreateLayout />,
-      // element: <ShopLayout />,
-      children: [
-        { index: true, element: <CustomerProductList /> },
-        { path: ":id", element: <CustomerProductDetail /> },
-      ],
-    },
+    
   ]);
-// {
-//   path: "/shop/create",
-//   element: <BouquetCreateLayout/>,
-//   children: [
-//     { index: true, element: <BouquetCreatePage /> },
-//     // { path: "create", element: <CreateProduct /> }, // "/shop/create"
-//     // { path: ":id", element: <ProductDetail /> }, // "/shop/123"
-//   ],
-// },
+
