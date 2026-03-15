@@ -27,6 +27,8 @@ export const CartPage = () => {
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
   const [street, setStreet] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [addressError, setAddressError] = useState("");
 
   // Simple demo location data
@@ -114,23 +116,12 @@ export const CartPage = () => {
   };
 
   const handlePlaceOrder = async () => {
-    try {
-      const orderData = {
-        fullName: "John Doe", // Replace with actual user input
-        phoneNumber: "123456789", // Replace with actual user input
-        deliveryAddress: "123 Main St", // Replace with actual user input
-        orderItems: cartItems.map((item) => ({
-          bouquetId: item.id,
-          quantity: item.quantity,
-        })),
-      };
-
-      const response = await orderService.createOrder(orderData);
-      console.log("Order created successfully:", response);
-      alert("Order placed successfully!");
-    } catch (error) {
-      console.error("Failed to place order:", error);
-      alert("Failed to place order. Please try again.");
+    if (!fullName.trim() || !phoneNumber.trim()) {
+      toast.error("Vui lòng nhập đầy đủ thông tin người nhận", {
+        position: "bottom-right",
+        autoClose: 2000,
+      });
+      return;
     }
 
     if (!province || !district || !ward || !street.trim()) {
@@ -147,20 +138,34 @@ export const CartPage = () => {
     const itemsToOrder = cartItems.filter((item) =>
       selectedItems.includes(item.id),
     );
-    const orderData = createOrderFromCart(itemsToOrder);
+    const orderData = {
+      fullName,
+      phoneNumber,
+      deliveryAddress: `${street}, ${ward}, ${district}, ${province}`,
+      orderItems: itemsToOrder.map((item) => ({
+        bouquetId: item.id,
+        quantity: item.quantity,
+      })),
+    };
 
-    // Show success message
-    toast.success(
-      `Đặt hàng thành công! ${selectedItems.length} sản phẩm. (Kiểm tra console để xem chi tiết order JSON)`,
-      {
+    try {
+      const response = await orderService.createOrder(orderData);
+      console.log("Order created successfully:", response);
+      toast.success(`Đặt hàng thành công! ${selectedItems.length} sản phẩm.`, {
         position: "bottom-right",
         autoClose: 3000,
-      },
-    );
+      });
 
-    // Remove ordered items from cart
-    selectedItems.forEach((id) => removeFromCart(id));
-    loadCart();
+      // Remove ordered items from cart
+      selectedItems.forEach((id) => removeFromCart(id));
+      loadCart();
+    } catch (error) {
+      console.error("Failed to place order:", error);
+      toast.error("Đặt hàng thất bại. Vui lòng thử lại.", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+    }
   };
 
   const calculateSubtotal = () => {
@@ -414,6 +419,26 @@ export const CartPage = () => {
 
               {/* Shipping Address */}
               <div className="mb-6 space-y-3">
+                <h3 className="font-bold text-slate-900">
+                  Thông Tin Người Nhận
+                </h3>
+
+                <input
+                  type="text"
+                  placeholder="Họ và tên"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Số điện thoại"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                />
+
                 <h3 className="font-bold text-slate-900">Địa Chỉ Giao Hàng</h3>
 
                 <select
