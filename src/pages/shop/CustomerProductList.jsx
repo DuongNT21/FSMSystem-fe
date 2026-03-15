@@ -27,16 +27,20 @@ export const CustomerProductList = () => {
     materialId: "",
     categoryId: "",
   });
+  const [sort, setSort] = useState("createdAt,desc");
 
   const fetchBouquets = async () => {
     setLoading(true);
     try {
+      const [sortBy, sortOrder] = sort.split(',');
       console.log("Fetching bouquets with request", {
         page,
         size: 9,
         status: 1,
         categoryId: filters.categoryId,
         ...filters,
+        sortBy,
+        sortOrder,
       });
       const response = await bouquetApi.get({
         page,
@@ -44,6 +48,8 @@ export const CustomerProductList = () => {
         status: 1, // Only show active ones
         categoryId: filters.categoryId,
         ...filters,
+        sortBy,
+        sortOrder,
       });
       setBouquets(response?.data?.map((item) => item.bouquet) ?? []);
       setTotalPages(response?.totalPages ?? 0);
@@ -59,7 +65,7 @@ export const CustomerProductList = () => {
       const response = await materialApi.getAll({ size: 100 });
       const d = response?.data;
       setMaterials(
-        Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : [],
+        Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : [],
       );
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -81,7 +87,7 @@ export const CustomerProductList = () => {
 
   useEffect(() => {
     fetchBouquets();
-  }, [page]);
+  }, [page, sort]);
 
   useEffect(() => {
     fetchMaterials();
@@ -92,8 +98,12 @@ export const CustomerProductList = () => {
   }, []);
 
   const handleApplyFilters = () => {
-    setPage(0);
-    fetchBouquets();
+    if (page !== 0) {
+      setPage(0);
+    } else {
+      // Manually refetch if already on page 0
+      fetchBouquets();
+    }
   };
 
   const handleAddToCart = (product) => {
@@ -102,6 +112,13 @@ export const CustomerProductList = () => {
       position: "bottom-right",
       autoClose: 2000,
     });
+  };
+
+  const handleSortChange = (e) => {
+    setSort(e.target.value);
+    if (page !== 0) {
+      setPage(0);
+    }
   };
 
   return (
@@ -163,6 +180,22 @@ export const CustomerProductList = () => {
                   Vật tư (Hoa & Phụ kiện)
                 </p>
                 <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                   <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      className="rounded text-rose-500 focus:ring-rose-500 size-4 border-slate-300"
+                      type="radio"
+                      name="material"
+                      checked={filters.materialId === ""}
+                      onChange={() =>
+                        setFilters({ ...filters, materialId: "" })
+                      }
+                    />
+                    <span
+                      className={`text-sm transition-colors ${filters.materialId === "" ? "text-rose-500 font-bold" : "text-slate-600 group-hover:text-rose-500"}`}
+                    >
+                      Tất cả
+                    </span>
+                  </label>
                   {materials.map((m) => (
                     <label
                       key={m.id}
@@ -187,22 +220,7 @@ export const CustomerProductList = () => {
                       </span>
                     </label>
                   ))}
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      className="rounded text-rose-500 focus:ring-rose-500 size-4 border-slate-300"
-                      type="radio"
-                      name="material"
-                      checked={filters.materialId === ""}
-                      onChange={() =>
-                        setFilters({ ...filters, materialId: "" })
-                      }
-                    />
-                    <span
-                      className={`text-sm transition-colors ${filters.materialId === "" ? "text-rose-500 font-bold" : "text-slate-600 group-hover:text-rose-500"}`}
-                    >
-                      Tất cả
-                    </span>
-                  </label>
+                 
                 </div>
               </div>
 
@@ -314,10 +332,14 @@ export const CustomerProductList = () => {
               <span className="text-xs text-slate-500 font-bold uppercase tracking-wider shrink-0">
                 Sắp xếp:
               </span>
-              <select className="bg-white border-slate-200 rounded-xl text-sm font-semibold focus:ring-rose-500 focus:border-rose-500 py-2 px-4 pr-10">
-                <option>Mới nhất</option>
-                <option>Giá: Thấp đến Cao</option>
-                <option>Giá: Cao đến Thấp</option>
+              <select
+                className="bg-white border-slate-200 rounded-xl text-sm font-semibold focus:ring-rose-500 focus:border-rose-500 py-2 px-4 pr-10"
+                value={sort}
+                onChange={handleSortChange}
+              >
+                <option value="createdAt,desc">Mới nhất</option>
+                <option value="price,asc">Giá: Thấp đến Cao</option>
+                <option value="price,desc">Giá: Cao đến Thấp</option>
               </select>
             </div>
           </div>
