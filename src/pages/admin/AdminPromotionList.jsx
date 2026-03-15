@@ -20,7 +20,8 @@ export const AdminPromotionList = () => {
       const response = await promotionApi.getAll({
         page,
         size: 10,
-        keyword
+        keyword: keyword || undefined,
+        status: statusFilter === "active" ? true : statusFilter === "expired" ? false : undefined
       });
       if (response && response.data) {
         setPromotions(response.data.data || []);
@@ -37,7 +38,7 @@ export const AdminPromotionList = () => {
 
   useEffect(() => {
     fetchPromotions();
-  }, [page, keyword]);
+  }, [page, keyword, statusFilter]);
 
   const handleCreate = () => {
     setSelectedPromotion(null);
@@ -48,6 +49,8 @@ export const AdminPromotionList = () => {
     setSelectedPromotion(promo);
     setIsModalOpen(true);
   };
+
+  
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa khuyến mãi này?")) {
@@ -60,15 +63,14 @@ export const AdminPromotionList = () => {
     }
   };
 
-  // Filter logic for UI (since API might not support status filter directly in the same way)
-  const filteredPromotions = promotions.filter(p => {
-    if (statusFilter === "all") return true;
-    const now = new Date();
-    const end = new Date(p.endDate);
-    if (statusFilter === "active") return now <= end;
-    if (statusFilter === "expired") return now > end;
-    return true;
-  });
+  // const filteredPromotions = promotions.filter(p => {
+  //   if (statusFilter === "all") return true;
+  //   const now = new Date();
+  //   const end = new Date(p.endDate);
+  //   if (statusFilter === "active") return now <= end;
+  //   if (statusFilter === "expired") return now > end;
+  //   return true;
+  // });
 
   return (
     <div className="p-8">
@@ -144,21 +146,25 @@ export const AdminPromotionList = () => {
               <tr>
                 <td colSpan="5" className="px-8 py-12 text-center text-slate-400">Đang tải dữ liệu...</td>
               </tr>
-            ) : filteredPromotions.length === 0 ? (
+            ) : promotions.length === 0 ? (
               <tr>
                 <td colSpan="5" className="px-8 py-12 text-center text-slate-400">Không tìm thấy khuyến mãi nào.</td>
               </tr>
             ) : (
-              filteredPromotions.map((p) => {
+              promotions.map((p) => {
                 const now = new Date();
                 const start = new Date(p.startDate);
                 const end = new Date(p.endDate);
+                const promoStatus = p.active;
                 let status = { label: 'ACTIVE', color: 'bg-green-100 text-green-600', dot: 'bg-green-500' };
                 
                 if (now < start) {
                   status = { label: 'UPCOMING', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-500' };
                 } else if (now > end) {
                   status = { label: 'EXPIRED', color: 'bg-slate-100 text-slate-500', dot: 'bg-slate-400' };
+                }
+                if (promoStatus === false){
+                  status = { label: 'INACTIVE', color: 'bg-red-100 text-black-600', dot: 'bg-red-500' };
                 }
 
                 return (
@@ -209,7 +215,7 @@ export const AdminPromotionList = () => {
         
         {/* Pagination */}
         <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-xs font-bold text-slate-400">Hiển thị {filteredPromotions.length} của {total} khuyến mãi</p>
+          <p className="text-xs font-bold text-slate-400">Hiển thị {promotions.length} của {total} khuyến mãi</p>
           <div className="flex gap-2">
             <button 
               disabled={page === 0}

@@ -34,7 +34,6 @@ export const Header = () => {
           <nav className="hidden md:flex space-x-8">
             <NavLink to="/" className={navLinkClass}>Trang chủ</NavLink>
             <NavLink to="/shop" className={navLinkClass}>Sản phẩm</NavLink>
-            <NavLink to="/shop/create" className={navLinkClass}>Tạo sản phẩm</NavLink>
             <NavLink to="/occasions" className={navLinkClass}>Chủ đề</NavLink>
             <NavLink to="/about" className={navLinkClass}>Về chúng tôi</NavLink>
             <NavLink to="/contact" className={navLinkClass}>Liên hệ</NavLink>
