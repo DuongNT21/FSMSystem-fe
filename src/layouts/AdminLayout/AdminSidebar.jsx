@@ -24,7 +24,7 @@ export const AdminSidebar = ({
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/products", icon: Package, label: "Sản phẩm" },
-    { to: "/admin/promotions", icon: Star , label: "Khuyến mãi"},
+    { to: "/admin/promotions", icon: Star, label: "Khuyến mãi" },
     { to: "/admin/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/admin/customers", icon: Users, label: "Khách hàng" },
     { to: "/admin/inventory", icon: Package, label: "Inventory" },

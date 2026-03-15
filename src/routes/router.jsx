@@ -26,6 +26,8 @@ import { AdminProductList } from "../pages/admin/AdminProductList.jsx";
 import { AdminPromotionList } from "../pages/admin/AdminPromotionList.jsx";
 import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
 import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
+import { CartPage } from "../pages/cart/CartPage.jsx";
+import OrderPage from "../pages/order/OrderPage.jsx";
 // import CategoryDetail from "../pages/admin/category/CategoryDetail";
 
 export const AppRoutes = () =>
@@ -57,6 +59,14 @@ export const AppRoutes = () =>
         {
           path: "/",
           element: <HomePage />,
+        },
+        {
+          path: "cart",
+          element: <CartPage />,
+        },
+        {
+          path: "orders",
+          element: <OrderPage />,
         },
       ],
     },
@@ -97,6 +107,10 @@ export const AppRoutes = () =>
         {
           path: "inventory/create",
           element: <CreateBatchPage />,
+        },
+        {
+          path: "orders",
+          element: <OrderPage />,
         },
       ],
     },
