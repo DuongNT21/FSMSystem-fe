@@ -30,4 +30,5 @@ export interface BouquetMaterial {
   bouquetId: number;
   materialId: number;
   quantity: number;
+  rawMaterialName: string;
 }

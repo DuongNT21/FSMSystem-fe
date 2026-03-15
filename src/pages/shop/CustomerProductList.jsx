@@ -6,12 +6,14 @@ import {
   Heart,
   ChevronLeft,
   ChevronRight,
+  Gift,
 } from "lucide-react";
 import { bouquetApi, materialApi } from "../../apis/flowerApi";
 import { Link } from "react-router-dom";
 import { categoryService } from "../../services/categoryService";
 import { addToCart } from "../../utils/cartUtils";
 import { toast } from "react-toastify";
+import { usePromotion } from "../../contexts/PromotionContext";
 
 export const CustomerProductList = () => {
   const [bouquets, setBouquets] = useState([]);
@@ -28,6 +30,7 @@ export const CustomerProductList = () => {
     categoryId: "",
   });
   const [sort, setSort] = useState("createdAt,desc");
+  const { activePromotion } = usePromotion() || {};
 
   const fetchBouquets = async () => {
     setLoading(true);
@@ -145,6 +148,19 @@ export const CustomerProductList = () => {
           FlowerShop.
         </p>
       </div>
+
+      {activePromotion && (
+        <div className="bg-rose-50 border-2 border-dashed border-rose-200 text-rose-800 p-4 rounded-2xl mb-8 text-center shadow-sm">
+          <p className="font-bold text-lg flex items-center justify-center gap-2">
+            <Gift size={20} /> {activePromotion.name}
+          </p>
+          <p className="text-sm mt-1">{activePromotion.description}</p>
+          <p className="text-sm mt-2 font-semibold">
+            Use code: {" "}
+            <span className="font-extrabold tracking-widest bg-white px-2 py-1 rounded-md text-rose-600">{activePromotion.code}</span>
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar Filters */}
