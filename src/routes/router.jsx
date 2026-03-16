@@ -53,7 +53,9 @@ export const AppRoutes = () =>
       path: "/",
       element: (
         <CustomerGuard>
-          <CustomerLayout />
+          <PromotionProvider>
+            <CustomerLayout />
+          </PromotionProvider>
         </CustomerGuard>
       ),
       children: [
