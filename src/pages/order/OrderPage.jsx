@@ -50,14 +50,18 @@ const OrderPage = ({ isAdmin = false }) => {
 
   useEffect(() => {
     fetchOrders();
-  }, [isAdmin]);
+  }, [isAdmin, filterStatus, searchTerm]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
+      const params = {
+        status: filterStatus === "all" ? undefined : filterStatus,
+        keyword: searchTerm || undefined,
+      };
       // Giả sử API tự phân biệt Role dựa trên Token
-      const data = await orderService.getListOrders();
-      setOrders(data);
+      const data = await orderService.getListOrders(params);
+      setOrders(data || []);
     } catch (error) {
       toast.error("Không thể tải danh sách đơn hàng");
     } finally {
@@ -76,15 +80,6 @@ const OrderPage = ({ isAdmin = false }) => {
       toast.error("Cập nhật thất bại");
     }
   };
-
-  const filteredOrders = orders.filter((order) => {
-    const matchesStatus =
-      filterStatus === "all" || order.status === filterStatus;
-    const matchesSearch =
-      order.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toString().includes(searchTerm);
-    return matchesStatus && matchesSearch;
-  });
 
   if (loading) {
     return (
@@ -170,7 +165,7 @@ const OrderPage = ({ isAdmin = false }) => {
         </div>
 
         {/* Content View */}
-        {filteredOrders.length === 0 ? (
+        {orders.length === 0 ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-100 font-medium text-slate-400">
             Không tìm thấy đơn hàng nào.
           </div>
@@ -188,7 +183,7 @@ const OrderPage = ({ isAdmin = false }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredOrders.map((order) => (
+                {orders.map((order) => (
                   <tr
                     key={order.id}
                     className="hover:bg-slate-50/50 transition-colors"
@@ -223,7 +218,7 @@ const OrderPage = ({ isAdmin = false }) => {
         ) : (
           /* CARD VIEW FOR USER */
           <div className="grid gap-4">
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <div
                 key={order.id}
                 onClick={() => setSelectedOrder(order)}

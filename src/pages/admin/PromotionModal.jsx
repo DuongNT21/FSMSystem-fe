@@ -12,7 +12,7 @@ export const PromotionModal = ({ isOpen, onClose, promotion, onSuccess }) => {
     endDate: "",
     minOrderValue: 0,
     maxDiscountValue: 0,
-    status: false
+    status: true
   });
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +27,7 @@ export const PromotionModal = ({ isOpen, onClose, promotion, onSuccess }) => {
         endDate: promotion.endDate ? new Date(promotion.endDate).toISOString().split('T')[0] : "",
         minOrderValue: promotion.minOrderValue || 0,
         maxDiscountValue: promotion.maxDiscountValue || 0,
-        status: promotion.active || true
+        status: promotion.active !== undefined ? promotion.active : true
       });
     } else {
       // Default values for new promotion
@@ -50,8 +50,11 @@ export const PromotionModal = ({ isOpen, onClose, promotion, onSuccess }) => {
   }, [promotion]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value, status: e.target.checked });
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -210,7 +213,7 @@ export const PromotionModal = ({ isOpen, onClose, promotion, onSuccess }) => {
                 <p className="text-xs text-slate-500 mt-0.5">Kích hoạt ngay chương trình sau khi tạo</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked value={formData.status} onChange={handleInputChange} name = "status"/>
+                <input type="checkbox" className="sr-only peer" checked={formData.status} onChange={handleInputChange} name="status"/>
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
               </label>
             </div>
