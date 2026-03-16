@@ -17,12 +17,14 @@ import {
 } from "../../utils/cartUtils";
 import { toast } from "react-toastify";
 import { orderService } from "../../services/orderService";
+import { usePromotion } from "../../contexts/PromotionContext";
+
 
 export const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-
+  const { activePromotion, reloadPromotion } = usePromotion() || {};
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
@@ -53,6 +55,9 @@ export const CartPage = () => {
 
   useEffect(() => {
     loadCart();
+    if (reloadPromotion) {
+      reloadPromotion();
+    }
   }, []);
 
   const loadCart = () => {
@@ -148,6 +153,10 @@ export const CartPage = () => {
       })),
     };
 
+    if (calculateDiscount() > 0 && activePromotion?.code) {
+      orderData.promotionCode = activePromotion.code;
+    }
+
     try {
       const response = await orderService.createOrder(orderData);
       console.log("Order created successfully:", response);
@@ -180,8 +189,28 @@ export const CartPage = () => {
     return Math.round(subtotal * 0.1); // 10% VAT
   };
 
+  const calculateDiscount = () => {
+    const subtotal = calculateSubtotal();
+    if (
+      activePromotion &&
+      activePromotion.discountValue > 0 &&
+      subtotal >= (activePromotion.minOrderValue || 0)
+    ) {
+      let discount = subtotal * (activePromotion.discountValue / 100);
+      if (
+        activePromotion.maxDiscountValue &&
+        activePromotion.maxDiscountValue > 0 &&
+        discount > activePromotion.maxDiscountValue
+      ) {
+        discount = activePromotion.maxDiscountValue;
+      }
+      return Math.round(discount);
+    }
+    return 0;
+  };
+
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
+    return calculateSubtotal() + calculateTax() - calculateDiscount();
   };
 
   if (cartItems.length === 0) {
@@ -414,6 +443,31 @@ export const CartPage = () => {
                   <span className="font-semibold text-slate-900">
                     {calculateTax().toLocaleString()}₫
                   </span>
+                </div>
+                {calculateDiscount() > 0 && (
+                  <div className="flex justify-between text-rose-500">
+                    <span>Giảm giá ({activePromotion.code}):</span>
+                    <span className="font-semibold">
+                      - {calculateDiscount().toLocaleString()}₫
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Total */}
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-lg font-bold text-slate-900">
+                  Tổng cộng
+                </span>
+                <div className="text-right">
+                  <span className="text-2xl font-black text-rose-500">
+                    {calculateTotal().toLocaleString()}₫
+                  </span>
+                  {calculateDiscount() > 0 && (
+                    <p className="text-base text-slate-400 line-through font-medium">
+                      {(calculateSubtotal() + calculateTax()).toLocaleString()}₫
+                    </p>
+                  )}
                 </div>
               </div>
 

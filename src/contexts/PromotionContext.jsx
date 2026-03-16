@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { promotionApi } from '../apis/flowerApi';
 
 const PromotionContext = createContext(null);
@@ -9,26 +9,26 @@ export const PromotionProvider = ({ children }) => {
   const [activePromotion, setActivePromotion] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchActivePromotion = async () => {
-      setLoading(true);
-      try {
-        const response = await promotionApi.getActive();
-        setActivePromotion(response?.data || response);
-      } catch (error) {
-        if (error.response && error.response.status !== 404) {
-          console.error('Error fetching active promotion:', error);
-        }
-        setActivePromotion(null);
-      } finally {
-        setLoading(false);
+  const fetchActivePromotion = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await promotionApi.getActive();
+      setActivePromotion(response?.data || response);
+    } catch (error) {
+      if (error.response && error.response.status !== 404) {
+        console.error('Error fetching active promotion:', error);
       }
-    };
-
-    fetchActivePromotion();
+      setActivePromotion(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const value = { activePromotion, loading };
+  useEffect(() => {
+    fetchActivePromotion();
+  }, [fetchActivePromotion]);
+
+  const value = { activePromotion, loading, reloadPromotion: fetchActivePromotion };
 
   return (
     <PromotionContext.Provider value={value}>
