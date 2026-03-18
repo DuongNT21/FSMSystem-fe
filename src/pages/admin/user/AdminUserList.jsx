@@ -4,12 +4,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Lock,
+  Unlock,
   Shield,
   User,
   Mail,
   Phone,
   MapPin,
-  Ban
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { userService } from "../../../services/userService";
@@ -94,21 +94,20 @@ export const AdminUserList = () => {
     }, 0);
   };
 
-  const handleBlockUser = async (user) => {
-    if (!user.active) return;
+  const handleToggleStatus = async (user) => {
     if (user.role === "Admin") return;
 
-    if (window.confirm(`Bạn có chắc chắn muốn chặn người dùng ${user.username}?`)) {
+    const newStatus = !user.active;
+    const actionText = newStatus ? "bỏ chặn" : "chặn";
+    
+    if (window.confirm(`Bạn có chắc chắn muốn ${actionText} người dùng ${user.username}?`)) {
       try {
-        await userService.blockUser(user.id);
-        toast.success(`Đã chặn người dùng ${user.username}`);
+        await userService.updateUserStatus(user.id, newStatus);
+        toast.success(`Đã ${actionText} người dùng ${user.username}`);
         fetchUsers();
       } catch (error) {
-        if (error.response && error.response.status === 400) {
-           toast.error("Không thể chặn Admin khác!");
-        } else {
-           toast.error("Lỗi khi chặn người dùng");
-        }
+        console.error(error);
+        toast.error(`Lỗi khi ${actionText} người dùng`);
       }
     }
   };
@@ -250,7 +249,6 @@ export const AdminUserList = () => {
               </tr>
             ) : (
               users.map((user) => {
-                const isBlocked = !user.active;
                 const isAdmin = user.role === "Admin";
 
                 return (
@@ -323,16 +321,15 @@ export const AdminUserList = () => {
                     <td className="px-6 py-4 text-right">
                       {!isAdmin && (
                         <button
-                          onClick={() => handleBlockUser(user)}
-                          disabled={isBlocked}
+                          onClick={() => handleToggleStatus(user)}
                           className={`p-2 rounded-lg transition-colors ${
-                            isBlocked
-                              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                              : "hover:bg-red-50 text-red-500"
+                            user.active
+                              ? "hover:bg-red-50 text-red-500"
+                              : "hover:bg-green-50 text-green-500"
                           }`}
-                          title={isBlocked ? "Đã bị chặn" : "Chặn người dùng"}
+                          title={user.active ? "Chặn người dùng" : "Bỏ chặn người dùng"}
                         >
-                          {isBlocked ? <Ban size={18} /> : <Lock size={18} />}
+                          {user.active ? <Lock size={18} /> : <Unlock size={18} />}
                         </button>
                       )}
                     </td>
