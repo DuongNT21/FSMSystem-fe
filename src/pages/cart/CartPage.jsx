@@ -19,7 +19,6 @@ import { toast } from "react-toastify";
 import { orderService } from "../../services/orderService";
 import { usePromotion } from "../../contexts/PromotionContext";
 
-
 export const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -159,13 +158,37 @@ export const CartPage = () => {
 
     try {
       const response = await orderService.createOrder(orderData);
-      console.log("Order created successfully:", response);
-      toast.success(`Đặt hàng thành công! ${selectedItems.length} sản phẩm.`, {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
 
-      // Remove ordered items from cart
+      // backend trả trực tiếp object có id
+      const orderId =
+        response?.id || response?.data?.id || response?.data?.data?.id;
+
+      console.log("FULL RESPONSE:", response);
+      console.log("orderId:", orderId);
+
+      if (!orderId) {
+        throw new Error("Không lấy được orderId");
+      }
+
+      // gọi API thanh toán
+      const paymentRes = await orderService.payOrder(orderId);
+
+      // backend có thể trả thẳng string hoặc object
+      const paymentUrl =
+        typeof paymentRes === "string"
+          ? paymentRes
+          : paymentRes?.data?.data || paymentRes?.data;
+
+      console.log("paymentRes:", paymentRes);
+      console.log("paymentUrl:", paymentUrl);
+
+      if (!paymentUrl) {
+        throw new Error("Không lấy được payment URL");
+      }
+
+      window.location.href = paymentUrl;
+
+      // Remove ordered items from cart (fallback nếu không redirect)
       selectedItems.forEach((id) => removeFromCart(id));
       loadCart();
     } catch (error) {

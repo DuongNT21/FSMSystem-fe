@@ -23,8 +23,14 @@ const getOrderById = async (id) => {
   return await orderApi.getOrderById(id);
 };
 
+const payOrder = async (orderId) => {
+  const token = localStorage.getItem("token");
+  return await orderApi.payOrder(orderId, token);
+};
+
 export const orderService = {
   createOrder,
   getListOrders,
   getOrderById,
+  payOrder,
 };
