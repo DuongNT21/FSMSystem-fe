@@ -20,8 +20,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [materialError, setMaterialError] = useState("");
   const [categoryError, setCategoryError] = useState("");
-  const [costData, setCostData] = useState(null);
-  const [costLoading, setCostLoading] = useState(false);
+  const [materialPrices, setMaterialPrices] = useState({}); // { [materialId]: price }
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -90,14 +89,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     setDeletedPublicIds([]);
     setSelectedImages([]);
     setNewImagePreviews([]);
-    setCostData(null);
-    if (bouquet?.id) {
-      setCostLoading(true);
-      bouquetApi.getCost(bouquet.id)
-        .then(res => setCostData(res?.data ?? res ?? null))
-        .catch(() => setCostData(null))
-        .finally(() => setCostLoading(false));
-    }
+    setMaterialPrices({});
   }, [bouquet]);
 
   const handleInputChange = (e) => {
@@ -110,10 +102,24 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     const mat = allMaterials.find(m => Number(m.id) === parseInt(materialId));
     if (!mat) return;
     if (formData.materials.find(m => m.name === mat.name)) return;
+
     setFormData({
       ...formData,
       materials: [...formData.materials, { name: mat.name, quantity: 1 }]
     });
+
+    // Fetch dynamic unit price
+    bouquetApi.getCost(materialId)
+      .then(res => {
+        const price = res?.data?.data ?? res?.data ?? res;
+        if (typeof price === 'number') {
+          setMaterialPrices(prev => ({ ...prev, [mat.id]: price }));
+        }
+      })
+      .catch(error => {
+        console.error(`Error fetching cost for material ${materialId}:`, error);
+        // Fallback to importPrice is handled in the useMemo and render
+      });
   };
 
   const handleUpdateMaterialQty = (name, qty) => {
@@ -165,10 +171,11 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const totalMaterialCost = useMemo(() => {
     return formData.materials.reduce((sum, m) => {
       const mat = allMaterials.find(am => am.name === m.name);
-      const unitPrice = mat?.importPrice ?? mat?.price ?? 0;
+      if (!mat) return sum;
+      const unitPrice = materialPrices[mat.id] ?? mat?.importPrice ?? mat?.price ?? 0;
       return sum + unitPrice * m.quantity;
     }, 0);
-  }, [formData.materials, allMaterials]);
+  }, [formData.materials, allMaterials, materialPrices]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -257,13 +264,13 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-sm font-semibold text-slate-700">Giá bán (VND)</label>
-                  {(costData?.totalCost > 0 || totalMaterialCost > 0) && (
+                  {totalMaterialCost > 0 && (
                     <button
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, price: costData?.totalCost ?? totalMaterialCost }))}
+                      onClick={() => setFormData(prev => ({ ...prev, price: totalMaterialCost }))}
                       className="text-xs text-rose-600 font-semibold hover:underline"
                     >
-                      Áp dụng giá vật tư: {new Intl.NumberFormat("vi-VN").format(costData?.totalCost ?? totalMaterialCost)} đ
+                      Áp dụng giá vật tư: {new Intl.NumberFormat("vi-VN").format(totalMaterialCost)} đ
                     </button>
                   )}
                 </div>
@@ -316,9 +323,8 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {formData.materials.map((m) => {
-                        const costRow = costData?.breakdown?.find(b => b.rawMaterialName === m.name);
                         const matInfo = allMaterials.find(am => am.name === m.name);
-                        const unitPrice = costRow?.unitPrice ?? matInfo?.importPrice ?? matInfo?.price ?? 0;
+                        const unitPrice = matInfo ? (materialPrices[matInfo.id] ?? matInfo.importPrice ?? matInfo.price ?? 0) : 0;
                         const lineTotal = unitPrice * m.quantity;
                         return (
                           <tr key={m.name}>
@@ -354,16 +360,13 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                       })}
                     </tbody>
                   </table>
-                  {costLoading && (
-                    <div className="px-4 py-3 text-xs text-slate-400 italic border-t border-slate-100">Đang tính chi phí...</div>
-                  )}
-                  {!costLoading && (costData?.totalCost > 0 || totalMaterialCost > 0) && (
+                  {totalMaterialCost > 0 && (
                     <div className="px-4 py-2.5 bg-rose-50 border-t border-rose-100 flex justify-between items-center">
                       <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
-                        {costData ? "Tổng chi phí nguyên liệu" : "Ước tính chi phí vật tư"}
+                        Ước tính chi phí vật tư
                       </span>
                       <span className="text-sm font-bold text-rose-600 font-mono">
-                        {new Intl.NumberFormat("vi-VN").format(costData?.totalCost ?? totalMaterialCost)} đ
+                        {new Intl.NumberFormat("vi-VN").format(totalMaterialCost)} đ
                       </span>
                     </div>
                   )}
