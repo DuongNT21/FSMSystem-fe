@@ -53,8 +53,18 @@ const getOrderById = async (id) => {
   };
 };
 
+const payOrder = async (orderId, token) => {
+  const response = await http.post(`/order/${orderId}/payment`, null, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
 export const orderApi = {
   createOrder,
   getListOrders,
   getOrderById,
+  payOrder,
 };
