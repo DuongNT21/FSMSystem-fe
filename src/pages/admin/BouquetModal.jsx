@@ -75,6 +75,19 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         }))
       });
       setExistingImages(bouquet.images?.map(img => ({ id: img.id, image: img.image, publicId: img.publicId })) || []);
+
+      (bouquet.bouquetsMaterials ?? []).forEach(m => {
+        if (m.rawMaterialId) {
+          bouquetApi.getCost(m.rawMaterialId)
+            .then(res => {
+              const price = res?.data?.data ?? res?.data ?? res;
+              if (typeof price === 'number') {
+                setMaterialPrices(prev => ({ ...prev, [m.rawMaterialId]: price }));
+              }
+            })
+            .catch(error => console.error(error));
+        }
+      });
     } else {
       setFormData({
         name: "",

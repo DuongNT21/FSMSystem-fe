@@ -1,12 +1,10 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Package,
+  FlaskConical,
   ShoppingBag,
-  ClipboardList,
+  Package,
   MessageSquare,
-  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -19,13 +17,10 @@ export const StaffSidebar = ({
 }) => {
   // Sidebar navigation items
   const navItems = [
-    { to: "/staff", icon: LayoutDashboard, label: "Dashboard", end: true },
-    { to: "/staff/raw-material", icon: Package, label: "Nguyên liệu" },
+    { to: "/staff/raw-material", icon: FlaskConical, label: "Nguyên liệu" },
     { to: "/staff/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/staff/products", icon: Package, label: "Sản phẩm" },
-    { to: "/staff/tasks", icon: ClipboardList, label: "Công việc" },
     { to: "/staff/reviews", icon: MessageSquare, label: "Đánh giá" },
-    { to: "/staff/settings", icon: Settings, label: "Cài đặt" },
   ];
 
   const sidebarLinkClass = ({ isActive }) =>

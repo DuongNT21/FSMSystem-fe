@@ -27,6 +27,7 @@ export const bouquetApi = {
   getCost: (materialId) => axiosClient.get("/bouquets/cost", { params: { materialId } }),
   getTrending: () => axiosClient.get("/bouquets/trending-today"),
   getTopRated: () => axiosClient.get("/bouquets/top-rated"),
+  checkInventory: () => axiosClient.post("/bouquets/check-inventory"),
 };
 
 export const promotionApi = {

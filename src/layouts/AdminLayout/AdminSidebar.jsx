@@ -6,12 +6,12 @@ import {
   ShoppingBag,
   Users,
   Tags,
-  Settings,
-  BarChart3,
-  MessageSquare,
   ChevronLeft,
   ChevronRight,
   Star,
+  Warehouse,
+  FlaskConical,
+  MessageSquare ,
 } from "lucide-react";
 
 export const AdminSidebar = ({
@@ -24,14 +24,13 @@ export const AdminSidebar = ({
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/products", icon: Package, label: "Sản phẩm" },
+    { to: "/admin/categories/list", icon: Tags, label: "Danh mục" },
+    { to: "/admin/raw-material", icon: FlaskConical, label: "Nguyên liệu" },
+    { to: "/admin/inventory", icon: Warehouse, label: "Kho hàng" },
     { to: "/admin/promotions", icon: Star, label: "Khuyến mãi" },
     { to: "/admin/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/admin/customers", icon: Users, label: "Khách hàng" },
-    { to: "/admin/inventory", icon: Package, label: "Inventory" },
-    { to: "/admin/categories", icon: Tags, label: "Danh mục" },
-    { to: "/admin/reports", icon: BarChart3, label: "Báo cáo" },
-    { to: "/admin/reviews", icon: MessageSquare, label: "Đánh giá" },
-    { to: "/admin/settings", icon: Settings, label: "Cài đặt" },
+    { to: "/admin/reviews", icon: MessageSquare, label: "Đánh giá" }, 
   ];
 
   const sidebarLinkClass = ({ isActive }) =>

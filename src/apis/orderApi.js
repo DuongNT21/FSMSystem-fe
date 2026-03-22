@@ -27,7 +27,7 @@ const getListOrders = async (param) => {
   return list.map((item) => ({
     id: item.id,
     fullName: item.fullName,
-    status: item.status,
+    status: item.orderStatus ?? item.status,
     phoneNumber: item.phoneNumber,
     deliveryAddress: item.deliveryAddress,
     totalPrice: item.totalPrice,
@@ -36,14 +36,16 @@ const getListOrders = async (param) => {
 
 const getOrderById = async (id) => {
   const response = await http.get(`/order/${id}`);
+  // http interceptor returns response.data already; some endpoints wrap in { data: {...} }
+  const d = response?.data ?? response;
   return {
-    id: response.data.id,
-    status: response.data.status,
-    fullName: response.data.fullName,
-    phoneNumber: response.data.phoneNumber,
-    deliveryAddress: response.data.deliveryAddress,
-    totalPrice: response.data.totalPrice,
-    orderItems: response.data.orderItems.map((item) => ({
+    id: d.id,
+    status: d.orderStatus ?? d.status,
+    fullName: d.fullName,
+    phoneNumber: d.phoneNumber,
+    deliveryAddress: d.deliveryAddress,
+    totalPrice: d.totalPrice,
+    orderItems: (d.orderItems ?? []).map((item) => ({
       id: item.id,
       bouquetName: item.bouquetName,
       bouquetDescription: item.bouquetDescription,
@@ -51,6 +53,11 @@ const getOrderById = async (id) => {
       price: item.price,
     })),
   };
+};
+
+const updateOrderStatus = async (id, status) => {
+  const response = await http.patch(`/order/${id}/status`, { status });
+  return response.data;
 };
 
 const payOrder = async (orderId, token) => {
@@ -66,5 +73,6 @@ export const orderApi = {
   createOrder,
   getListOrders,
   getOrderById,
+  updateOrderStatus,
   payOrder,
 };
