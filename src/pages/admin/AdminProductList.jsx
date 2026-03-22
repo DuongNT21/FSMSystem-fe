@@ -11,7 +11,7 @@ import {
 import { bouquetApi, materialApi, categoryApi } from "../../apis/flowerApi";
 import { BouquetModal } from "./BouquetModal";
 
-export const AdminProductList = () => {
+export const AdminProductList = ({ canCreate = true, canDelete = true }) => {
   const [bouquets, setBouquets] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -33,6 +33,7 @@ export const AdminProductList = () => {
   const fetchBouquets = async () => {
     setLoading(true);
     try {
+      await bouquetApi.checkInventory();
       const response = await bouquetApi.get({
         page,
         size: 10,
@@ -137,13 +138,15 @@ export const AdminProductList = () => {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-slate-800">Danh sách bó hoa</h2>
-        <button
-          onClick={handleCreate}
-          className="bg-rose-500 hover:opacity-90 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 shadow-lg shadow-rose-500/20 transition-all transform active:scale-95"
-        >
-          <Plus size={18} />
-          <span>Tạo Sản Phẩm</span>
-        </button>
+        {canCreate && (
+          <button
+            onClick={handleCreate}
+            className="bg-rose-500 hover:opacity-90 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 shadow-lg shadow-rose-500/20 transition-all transform active:scale-95"
+          >
+            <Plus size={18} />
+            <span>Tạo Sản Phẩm</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -369,13 +372,15 @@ export const AdminProductList = () => {
                         >
                           <Edit size={16} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(b.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDelete(b.id)}
+                            className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

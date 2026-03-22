@@ -24,9 +24,10 @@ export const bouquetApi = {
   get: (params) => axiosClient.get("/bouquets/get", { params }),
   getById: (id) => axiosClient.get("/bouquets/getById", { params: { id } }),
   delete: (id) => axiosClient.delete("/bouquets/delete", { params: { id } }),
-  getCost: (id) => axiosClient.get("/bouquets/cost", { params: { id } }),
+  getCost: (materialId) => axiosClient.get("/bouquets/cost", { params: { materialId } }),
   getTrending: () => axiosClient.get("/bouquets/trending-today"),
   getTopRated: () => axiosClient.get("/bouquets/top-rated"),
+  checkInventory: () => axiosClient.post("/bouquets/check-inventory"),
 };
 
 export const promotionApi = {

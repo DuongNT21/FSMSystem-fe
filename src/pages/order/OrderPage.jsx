@@ -18,12 +18,21 @@ import {
 import { orderService } from "../../services/orderService";
 import { toast } from "react-toastify";
 
+const STATUS_TRANSITIONS = {
+  pending: ["Shipping", "Cancelled"],
+  shipping: ["Completed", "Cancelled"],
+  completed: [],
+  cancelled: [],
+};
+
 const OrderPage = ({ isAdmin = false }) => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [pendingStatus, setPendingStatus] = useState("");
 
   const statusConfig = {
     pending: {
@@ -52,9 +61,9 @@ const OrderPage = ({ isAdmin = false }) => {
     fetchOrders();
   }, [isAdmin, filterStatus, searchTerm]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const params = {
         status: filterStatus === "all" ? undefined : filterStatus,
         keyword: searchTerm || undefined,
@@ -65,17 +74,32 @@ const OrderPage = ({ isAdmin = false }) => {
     } catch (error) {
       toast.error("Không thể tải danh sách đơn hàng");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  const handleUpdateStatus = async (orderId, newStatus) => {
-    if (!isAdmin) return;
+  const handleRowClick = async (order) => {
     try {
-      // await orderService.updateOrderStatus(orderId, newStatus);
-      toast.success(`Cập nhật đơn hàng #${orderId} thành công`);
-      fetchOrders();
-      setSelectedOrder(null);
+      setLoadingDetail(true);
+      const detail = await orderService.getOrderById(order.id);
+      setSelectedOrder(detail);
+      setPendingStatus("");
+    } catch (error) {
+      console.error("getOrderById failed:", error);
+      toast.error("Không thể tải chi tiết đơn hàng");
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!isAdmin || !selectedOrder || !pendingStatus) return;
+    try {
+      await orderService.updateOrderStatus(selectedOrder.id, pendingStatus);
+      toast.success(`Cập nhật đơn hàng #${selectedOrder.id} thành công`);
+      setSelectedOrder({ ...selectedOrder, status: pendingStatus.toLowerCase() });
+      setPendingStatus("");
+      fetchOrders(true);
     } catch (error) {
       toast.error("Cập nhật thất bại");
     }
@@ -197,14 +221,14 @@ const OrderPage = ({ isAdmin = false }) => {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[order.status || "pending"].color}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()].color}`}
                       >
-                        {statusConfig[order.status || "pending"].label}
+                       {statusConfig[(order.status || "pending").toLowerCase()].icon} {statusConfig[(order.status || "pending").toLowerCase()].label}
                       </span>
                     </td>
                     <td className="p-4 text-right">
                       <button
-                        onClick={() => setSelectedOrder(order)}
+                        onClick={() => handleRowClick(order)}
                         className="text-xs font-bold bg-slate-900 text-white px-4 py-1.5 rounded-lg hover:bg-rose-500 transition-all"
                       >
                         Xem chi tiết
@@ -221,7 +245,7 @@ const OrderPage = ({ isAdmin = false }) => {
             {orders.map((order) => (
               <div
                 key={order.id}
-                onClick={() => setSelectedOrder(order)}
+                onClick={() => handleRowClick(order)}
                 className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-rose-200 cursor-pointer transition-all shadow-sm"
               >
                 <div className="flex items-center gap-4">
@@ -239,14 +263,21 @@ const OrderPage = ({ isAdmin = false }) => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[order.status || "pending"].color}`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()].color}`}
                   >
-                    {statusConfig[order.status || "pending"].label}
+                    {statusConfig[(order.status || "pending").toLowerCase()].label}
                   </span>
                   <ChevronRight size={18} className="text-slate-300" />
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Loading overlay for detail fetch */}
+        {loadingDetail && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-rose-500"></div>
           </div>
         )}
 
@@ -259,7 +290,7 @@ const OrderPage = ({ isAdmin = false }) => {
                   Chi Tiết Đơn #{selectedOrder.id}
                 </h2>
                 <button
-                  onClick={() => setSelectedOrder(null)}
+                  onClick={() => { setSelectedOrder(null); setPendingStatus(""); }}
                   className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
                 >
                   <X size={24} />
@@ -319,30 +350,49 @@ const OrderPage = ({ isAdmin = false }) => {
                   <p className="text-[10px] font-bold text-slate-400 uppercase">
                     Trạng thái đơn hàng
                   </p>
-                  {isAdmin ? (
-                    Object.keys(statusConfig).map((status) => (
-                      <button
-                        key={status}
-                        onClick={() =>
-                          handleUpdateStatus(selectedOrder.id, status)
-                        }
-                        className={`p-3 rounded-xl text-xs font-bold flex justify-between items-center transition-all border-2 ${
-                          (selectedOrder.status || "pending") === status
-                            ? "bg-white border-rose-500 text-rose-500 shadow-sm"
-                            : "bg-white border-transparent text-slate-400 hover:border-slate-200"
-                        }`}
-                      >
-                        {statusConfig[status].label}
-                        {(selectedOrder.status || "pending") === status && (
-                          <CheckCircle2 size={14} />
-                        )}
-                      </button>
-                    ))
-                  ) : (
+                  {isAdmin
+                    ? (() => {
+                        const currentKey = (selectedOrder.status || "pending").toLowerCase();
+                        const allowedNext = STATUS_TRANSITIONS[currentKey] ?? [];
+                        return (
+                          <>
+                            <div className="p-3 rounded-xl text-xs font-bold flex justify-between items-center border-2 bg-white border-rose-500 text-rose-500 shadow-sm">
+                              {statusConfig[currentKey]?.label ?? selectedOrder.status}
+                              <CheckCircle2 size={14} />
+                            </div>
+                            {allowedNext.length > 0 ? (
+                              <>
+                                <select
+                                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-rose-500/20 outline-none cursor-pointer"
+                                  value={pendingStatus}
+                                  onChange={(e) => setPendingStatus(e.target.value)}
+                                >
+                                  <option value="">-- Chọn trạng thái mới --</option>
+                                  {allowedNext.map((s) => (
+                                    <option key={s} value={s}>
+                                      {statusConfig[s.toLowerCase()]?.label ?? s}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={handleUpdateStatus}
+                                  disabled={!pendingStatus}
+                                  className="w-full py-2.5 rounded-xl text-xs font-bold bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                >
+                                  Xác nhận cập nhật
+                                </button>
+                              </>
+                            ) : (
+                              <p className="text-[10px] text-slate-400 italic text-center">Đơn hàng đã kết thúc</p>
+                            )}
+                          </>
+                        );
+                      })()
+                    : (
                     <div
-                      className={`p-4 rounded-xl border-2 text-center font-bold uppercase text-xs ${statusConfig[selectedOrder.status || "pending"].color}`}
+                      className={`p-4 rounded-xl border-2 text-center font-bold uppercase text-xs ${statusConfig[(selectedOrder.status || "pending").toLowerCase()]?.color}`}
                     >
-                      {statusConfig[selectedOrder.status || "pending"].label}
+                      {statusConfig[(selectedOrder.status || "pending").toLowerCase()]?.label}
                     </div>
                   )}
                   <div className="mt-auto pt-4 border-t border-slate-200">

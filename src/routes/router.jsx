@@ -18,6 +18,7 @@ import TestAdminPage from "../pages/admin/TestPage";
 import InventoryPage from "../pages/admin/inventory/InventoryPage";
 import InventoryLogPage from "../pages/admin/inventory/InventoryLogPage";
 import CreateBatchPage from "../pages/admin/inventory/CreateBatchPage";
+import UpdateBatchPage from "../pages/admin/inventory/UpdateBatchPage";
 import CategoryDetail from "../pages/admin/category/CategoryDetail";
 import { ShopLayout } from "../layouts/ShopLayout/ShopLayout";
 import { BouquetCreateLayout } from "../layouts/BouquetCreateLayout/BouquetCreateLayout";
@@ -30,6 +31,7 @@ import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
 import { CartPage } from "../pages/cart/CartPage.jsx";
 import OrderPage from "../pages/order/OrderPage.jsx";
 import { AdminUserList } from "../pages/admin/user/AdminUserList.jsx";
+import StaffReviewsPage from "../pages/staff/reviews/StaffReviewsPage.jsx";
 // import CategoryDetail from "../pages/admin/category/CategoryDetail";
 
 export const AppRoutes = () =>
@@ -105,35 +107,42 @@ export const AppRoutes = () =>
           element: <InventoryPage />,
         },
         {
-          path: "inventory/:id/logs",
-          element: <InventoryLogPage />,
-        },
-        {
           path: "inventory/create",
           element: <CreateBatchPage />,
         },
         {
-          path: "orders",
-          element: <OrderPage />,
+          path: "inventory/:id/logs",
+          element: <InventoryLogPage />,
         },
-         {
+        {
+          path: "inventory/:id/update",
+          element: <UpdateBatchPage />,
+        },
+        {
+          path: "categories",
+          children: [
+            { index: true, element: <Navigate to="list" replace /> },
+            { path: "list", element: <ListCategories /> },
+            { path: "create", element: <CreateCategory /> },
+            { path: ":id", element: <CategoryDetail /> },
+          ],
+        },
+        {
+          path: "raw-material",
+          children: [
+            { index: true, element: <ListRawMaterials /> },
+            { path: "create", element: <CreateRawMaterial /> },
+            { path: ":id", element: <RawMaterialDetail /> },
+          ],
+        },
+        {
+          path: "orders",
+          element: <OrderPage isAdmin={true} />,
+        },
+        {
           path: "customers",
           element: <AdminUserList />,
         },
-      ],
-    },
-    {
-      path: "/admin/categories",
-      element: (
-        <RoleBasedGuard allowedRoles={["Admin"]}>
-          <AdminLayout />
-        </RoleBasedGuard>
-      ),
-      children: [
-        { index: true, element: <Navigate to="list" replace /> },
-        { path: "list", element: <ListCategories /> },
-        { path: "create", element: <CreateCategory /> },
-        { path: ":id", element: <CategoryDetail /> },
       ],
     },
     {
@@ -155,6 +164,18 @@ export const AppRoutes = () =>
             { path: "create", element: <CreateRawMaterial /> },
             { path: ":id", element: <RawMaterialDetail /> },
           ],
+        },
+        {
+          path: "orders",
+          element: <OrderPage isAdmin={true} />,
+        },
+        {
+          path: "products",
+          element: <AdminProductList canCreate={false} canDelete={false} />,
+        },
+        {
+          path: "reviews",
+          element: <StaffReviewsPage />,
         },
       ],
     },
