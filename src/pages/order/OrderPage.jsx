@@ -1,27 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   ChevronRight,
   Package,
   MapPin,
-  Phone,
-  User,
   X,
   Clock,
-  Filter,
   CheckCircle2,
-  Truck,
   AlertCircle,
-  Search,
+  CheckSquare,
   ShieldCheck,
+  Calendar,
 } from "lucide-react";
 import { orderService } from "../../services/orderService";
 import { toast } from "react-toastify";
 
 const STATUS_TRANSITIONS = {
-  pending: ["Shipping", "Cancelled"],
-  shipping: ["Completed", "Cancelled"],
-  completed: [],
+  pending: [],
+  accepted: ["Done"],
+  done: [],
   cancelled: [],
 };
 
@@ -31,8 +27,10 @@ const OrderPage = ({ isAdmin = false }) => {
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
   const [pendingStatus, setPendingStatus] = useState("");
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const statusConfig = {
     pending: {
@@ -40,12 +38,12 @@ const OrderPage = ({ isAdmin = false }) => {
       color: "bg-amber-50 text-amber-600 border-amber-100",
       icon: <Clock size={14} />,
     },
-    shipping: {
-      label: "Đang giao",
+    accepted: {
+      label: "Đã xác nhận",
       color: "bg-blue-50 text-blue-600 border-blue-100",
-      icon: <Truck size={14} />,
+      icon: <CheckSquare size={14} />,
     },
-    completed: {
+    done: {
       label: "Hoàn thành",
       color: "bg-emerald-50 text-emerald-600 border-emerald-100",
       icon: <CheckCircle2 size={14} />,
@@ -57,18 +55,21 @@ const OrderPage = ({ isAdmin = false }) => {
     },
   };
 
+  const allStatuses = ["all", "pending", "accepted", "done", "cancelled"];
+  const adminStatuses = ["all", "accepted", "done"];
+
   useEffect(() => {
     fetchOrders();
-  }, [isAdmin, filterStatus, searchTerm]);
+  }, [isAdmin, filterStatus, fromDate, toDate]);
 
   const fetchOrders = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const params = {
         status: filterStatus === "all" ? undefined : filterStatus,
-        keyword: searchTerm || undefined,
+        fromDate: fromDate || undefined,
+        toDate: toDate || undefined,
       };
-      // Giả sử API tự phân biệt Role dựa trên Token
       const data = await orderService.getListOrders(params);
       setOrders(data || []);
     } catch (error) {
@@ -85,7 +86,6 @@ const OrderPage = ({ isAdmin = false }) => {
       setSelectedOrder(detail);
       setPendingStatus("");
     } catch (error) {
-      console.error("getOrderById failed:", error);
       toast.error("Không thể tải chi tiết đơn hàng");
     } finally {
       setLoadingDetail(false);
@@ -97,7 +97,10 @@ const OrderPage = ({ isAdmin = false }) => {
     try {
       await orderService.updateOrderStatus(selectedOrder.id, pendingStatus);
       toast.success(`Cập nhật đơn hàng #${selectedOrder.id} thành công`);
-      setSelectedOrder({ ...selectedOrder, status: pendingStatus.toLowerCase() });
+      setSelectedOrder({
+        ...selectedOrder,
+        status: pendingStatus.toLowerCase(),
+      });
       setPendingStatus("");
       fetchOrders(true);
     } catch (error) {
@@ -128,62 +131,57 @@ const OrderPage = ({ isAdmin = false }) => {
             <h1 className="text-4xl font-black text-slate-900 mb-2">
               {isAdmin ? "Quản Lý Đơn Hàng" : "Đơn Hàng Của Bạn"}
             </h1>
-            <p className="text-slate-600">
-              {isAdmin
-                ? "Hệ thống quản trị đơn hàng toàn hệ thống"
-                : "Theo dõi lịch sử và trạng thái các đơn hàng đã đặt"}
-            </p>
           </div>
-
-          {isAdmin && (
-            <div className="flex gap-4">
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <p className="text-xs text-slate-400 font-bold uppercase">
-                  Doanh thu
-                </p>
-                <p className="text-xl font-black text-slate-900">
-                  {orders
-                    .reduce((sum, o) => sum + o.totalPrice, 0)
-                    .toLocaleString()}
-                  ₫
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Filters (Dành cho cả 2 nhưng Admin cần Search mạnh hơn) */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder={
-                isAdmin ? "Tìm theo tên khách, mã đơn..." : "Tìm mã đơn hàng..."
-              }
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 outline-none"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        {/* Filters Section */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+            {(isAdmin ? adminStatuses : allStatuses).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  filterStatus === status
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
+              >
+                {status === "all" ? "Tất cả" : statusConfig[status]?.label}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {["all", "pending", "shipping", "completed", "cancelled"].map(
-              (status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                    filterStatus === status
-                      ? "bg-slate-900 text-white"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                  }`}
-                >
-                  {status === "all" ? "Tất cả" : statusConfig[status].label}
-                </button>
-              ),
+
+          {/* Date Picker Group */}
+          <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-slate-400" />
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              />
+            </div>
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              />
+            </div>
+            {(fromDate || toDate) && (
+              <button
+                onClick={() => {
+                  setFromDate("");
+                  setToDate("");
+                }}
+                className="ml-2 p-1 hover:bg-slate-200 rounded-full text-slate-400 hover:text-rose-500 transition-colors"
+              >
+                <X size={14} />
+              </button>
             )}
           </div>
         </div>
@@ -191,7 +189,7 @@ const OrderPage = ({ isAdmin = false }) => {
         {/* Content View */}
         {orders.length === 0 ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-100 font-medium text-slate-400">
-            Không tìm thấy đơn hàng nào.
+            Không tìm thấy đơn hàng nào trong khoảng thời gian này.
           </div>
         ) : isAdmin ? (
           /* TABLE VIEW FOR ADMIN */
@@ -221,9 +219,18 @@ const OrderPage = ({ isAdmin = false }) => {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()].color}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()]?.color}`}
                       >
-                       {statusConfig[(order.status || "pending").toLowerCase()].icon} {statusConfig[(order.status || "pending").toLowerCase()].label}
+                        {
+                          statusConfig[
+                            (order.status || "pending").toLowerCase()
+                          ]?.icon
+                        }{" "}
+                        {
+                          statusConfig[
+                            (order.status || "pending").toLowerCase()
+                          ]?.label
+                        }
                       </span>
                     </td>
                     <td className="p-4 text-right">
@@ -240,7 +247,7 @@ const OrderPage = ({ isAdmin = false }) => {
             </table>
           </div>
         ) : (
-          /* CARD VIEW FOR USER */
+          /* TABLE VIEW FOR USER */
           <div className="grid gap-4">
             {orders.map((order) => (
               <div
@@ -263,9 +270,12 @@ const OrderPage = ({ isAdmin = false }) => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()].color}`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()]?.color}`}
                   >
-                    {statusConfig[(order.status || "pending").toLowerCase()].label}
+                    {
+                      statusConfig[(order.status || "pending").toLowerCase()]
+                        ?.label
+                    }
                   </span>
                   <ChevronRight size={18} className="text-slate-300" />
                 </div>
@@ -274,14 +284,6 @@ const OrderPage = ({ isAdmin = false }) => {
           </div>
         )}
 
-        {/* Loading overlay for detail fetch */}
-        {loadingDetail && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-rose-500"></div>
-          </div>
-        )}
-
-        {/* Unified Detail Modal */}
         {selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -290,7 +292,10 @@ const OrderPage = ({ isAdmin = false }) => {
                   Chi Tiết Đơn #{selectedOrder.id}
                 </h2>
                 <button
-                  onClick={() => { setSelectedOrder(null); setPendingStatus(""); }}
+                  onClick={() => {
+                    setSelectedOrder(null);
+                    setPendingStatus("");
+                  }}
                   className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
                 >
                   <X size={24} />
@@ -317,14 +322,13 @@ const OrderPage = ({ isAdmin = false }) => {
                       </p>
                     </div>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 font-medium text-slate-600 text-sm">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-sm font-medium text-slate-600">
                     <MapPin
                       size={14}
                       className="inline mr-2 mb-1 text-slate-400"
-                    />{" "}
+                    />
                     {selectedOrder.deliveryAddress}
                   </div>
-
                   <div className="border border-slate-100 rounded-2xl overflow-hidden">
                     {selectedOrder.orderItems?.map((item) => (
                       <div
@@ -345,54 +349,66 @@ const OrderPage = ({ isAdmin = false }) => {
                   </div>
                 </div>
 
-                {/* Status Column (Admin can edit, User can only see) */}
                 <div className="bg-slate-50 p-5 rounded-2xl flex flex-col gap-3">
                   <p className="text-[10px] font-bold text-slate-400 uppercase">
                     Trạng thái đơn hàng
                   </p>
-                  {isAdmin
-                    ? (() => {
-                        const currentKey = (selectedOrder.status || "pending").toLowerCase();
-                        const allowedNext = STATUS_TRANSITIONS[currentKey] ?? [];
-                        return (
-                          <>
-                            <div className="p-3 rounded-xl text-xs font-bold flex justify-between items-center border-2 bg-white border-rose-500 text-rose-500 shadow-sm">
-                              {statusConfig[currentKey]?.label ?? selectedOrder.status}
-                              <CheckCircle2 size={14} />
-                            </div>
-                            {allowedNext.length > 0 ? (
-                              <>
-                                <select
-                                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-rose-500/20 outline-none cursor-pointer"
-                                  value={pendingStatus}
-                                  onChange={(e) => setPendingStatus(e.target.value)}
-                                >
-                                  <option value="">-- Chọn trạng thái mới --</option>
-                                  {allowedNext.map((s) => (
-                                    <option key={s} value={s}>
-                                      {statusConfig[s.toLowerCase()]?.label ?? s}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  onClick={handleUpdateStatus}
-                                  disabled={!pendingStatus}
-                                  className="w-full py-2.5 rounded-xl text-xs font-bold bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                                >
-                                  Xác nhận cập nhật
-                                </button>
-                              </>
-                            ) : (
-                              <p className="text-[10px] text-slate-400 italic text-center">Đơn hàng đã kết thúc</p>
-                            )}
-                          </>
-                        );
-                      })()
-                    : (
+                  {isAdmin ? (
+                    (() => {
+                      const currentKey = (
+                        selectedOrder.status || "pending"
+                      ).toLowerCase();
+                      const allowedNext = STATUS_TRANSITIONS[currentKey] ?? [];
+                      return (
+                        <>
+                          <div className="p-3 rounded-xl text-xs font-bold flex justify-between items-center border-2 bg-white border-rose-500 text-rose-500 shadow-sm">
+                            {statusConfig[currentKey]?.label ??
+                              selectedOrder.status}
+                            <CheckCircle2 size={14} />
+                          </div>
+                          {allowedNext.length > 0 ? (
+                            <>
+                              <select
+                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white outline-none cursor-pointer"
+                                value={pendingStatus}
+                                onChange={(e) =>
+                                  setPendingStatus(e.target.value)
+                                }
+                              >
+                                <option value="">
+                                  -- Chọn trạng thái mới --
+                                </option>
+                                {allowedNext.map((s) => (
+                                  <option key={s} value={s}>
+                                    {statusConfig[s.toLowerCase()]?.label ?? s}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                onClick={handleUpdateStatus}
+                                disabled={!pendingStatus}
+                                className="w-full py-2.5 rounded-xl text-xs font-bold bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-40 transition-all"
+                              >
+                                Xác nhận cập nhật
+                              </button>
+                            </>
+                          ) : (
+                            <p className="text-[10px] text-slate-400 italic text-center">
+                              Đơn hàng đã kết thúc
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()
+                  ) : (
                     <div
                       className={`p-4 rounded-xl border-2 text-center font-bold uppercase text-xs ${statusConfig[(selectedOrder.status || "pending").toLowerCase()]?.color}`}
                     >
-                      {statusConfig[(selectedOrder.status || "pending").toLowerCase()]?.label}
+                      {
+                        statusConfig[
+                          (selectedOrder.status || "pending").toLowerCase()
+                        ]?.label
+                      }
                     </div>
                   )}
                   <div className="mt-auto pt-4 border-t border-slate-200">
@@ -409,6 +425,12 @@ const OrderPage = ({ isAdmin = false }) => {
           </div>
         )}
       </div>
+
+      {loadingDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-rose-500"></div>
+        </div>
+      )}
     </div>
   );
 };
