@@ -29,6 +29,8 @@ import { CustomerProductList } from "../pages/shop/CustomerProductList.jsx";
 import { PromotionProvider } from "../contexts/PromotionContext.jsx";
 import { CustomerProductDetail } from "../pages/shop/CustomerProductDetail.jsx";
 import { CartPage } from "../pages/cart/CartPage.jsx";
+import PaymentSuccess from "../pages/payment/PaymentSuccess.jsx";
+import PaymentFailed from "../pages/payment/PaymentFailed.jsx";
 import OrderPage from "../pages/order/OrderPage.jsx";
 import { AdminUserList } from "../pages/admin/user/AdminUserList.jsx";
 import StaffReviewsPage from "../pages/staff/reviews/StaffReviewsPage.jsx";
@@ -192,5 +194,12 @@ export const AppRoutes = () =>
         { path: ":id", element: <CustomerProductDetail /> }, // "/shop/123"
       ],
     },
-    
+    {
+      path: "/payment/success/:orderId",
+      element: <PaymentSuccess />,
+    },
+    {
+      path: "/payment/failed/:orderId",
+      element: <PaymentFailed />,
+    },
   ]);
