@@ -12,4 +12,16 @@ export const userService = {
     });
     return response;
   },
+  createStaff: async (data) => {
+    const response = await userApi.createStaff(data);
+    return response;
+  },
+  updateStaff: async (id, data) => {
+    const response = await userApi.updateStaff(id, data);
+    return response;
+  },
+  deleteStaff: async (id) => {
+    const response = await userApi.deleteStaff(id);
+    return response;
+  },
 };

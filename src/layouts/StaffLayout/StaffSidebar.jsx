@@ -7,6 +7,10 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
+  Users,
+  Tags,
+  Warehouse,
+  Star,
 } from "lucide-react";
 
 export const StaffSidebar = ({
@@ -17,9 +21,13 @@ export const StaffSidebar = ({
 }) => {
   // Sidebar navigation items
   const navItems = [
-    { to: "/staff/raw-material", icon: FlaskConical, label: "Nguyên liệu" },
-    { to: "/staff/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/staff/products", icon: Package, label: "Sản phẩm" },
+    { to: "/staff/categories/list", icon: Tags, label: "Danh mục" },
+    { to: "/staff/raw-material", icon: FlaskConical, label: "Nguyên liệu" },
+    { to: "/staff/inventory", icon: Warehouse, label: "Kho hàng" },
+    { to: "/staff/promotions", icon: Star, label: "Khuyến mãi" },
+    { to: "/staff/orders", icon: ShoppingBag, label: "Đơn hàng" },
+    { to: "/staff/users", icon: Users, label: "Khách hàng" },
     { to: "/staff/reviews", icon: MessageSquare, label: "Đánh giá" },
   ];
 

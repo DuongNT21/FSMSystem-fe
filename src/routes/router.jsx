@@ -142,8 +142,12 @@ export const AppRoutes = () =>
           element: <OrderPage isAdmin={true} />,
         },
         {
-          path: "customers",
+          path: "users",
           element: <AdminUserList />,
+        },
+        {
+          path: "reviews",
+          element: <StaffReviewsPage />,
         },
       ],
     },
@@ -173,11 +177,44 @@ export const AppRoutes = () =>
         },
         {
           path: "products",
-          element: <AdminProductList canCreate={false} canDelete={false} />,
+          element: <AdminProductList />,
+        },
+        {
+          path: "promotions",
+          element: <AdminPromotionList />,
+        },
+        {
+          path: "inventory",
+          element: <InventoryPage />,
+        },
+        {
+          path: "inventory/create",
+          element: <CreateBatchPage />,
+        },
+        {
+          path: "inventory/:id/logs",
+          element: <InventoryLogPage />,
+        },
+        {
+          path: "inventory/:id/update",
+          element: <UpdateBatchPage />,
+        },
+        {
+          path: "categories",
+          children: [
+            { index: true, element: <Navigate to="list" replace /> },
+            { path: "list", element: <ListCategories /> },
+            { path: "create", element: <CreateCategory /> },
+            { path: ":id", element: <CategoryDetail /> },
+          ],
         },
         {
           path: "reviews",
           element: <StaffReviewsPage />,
+        },
+        {
+          path: "users",
+          element: <AdminUserList />,
         },
       ],
     },
