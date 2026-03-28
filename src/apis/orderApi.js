@@ -12,19 +12,23 @@ const createOrder = async (data) => {
 };
 
 const getListOrders = async (param) => {
-  const response = await http.get("/order", {
-    params: param,
-  });
-  const payload = response.data;
-  const list = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.data?.items)
-      ? payload.data.items
-      : Array.isArray(payload?.data)
-        ? payload.data
-        : [];
+  const response = await http.get("/order", { params: param });
 
-  return list.map((item) => ({
+  let rawArray = [];
+  let totalPages = 1;
+
+  const resData = response?.data || response;
+
+  if (resData?.data?.data && Array.isArray(resData.data.data)) {
+    rawArray = resData.data.data;
+    totalPages = resData.data.totalPages || 1;
+  } else if (resData?.data && Array.isArray(resData.data)) {
+    rawArray = resData.data;
+    totalPages = resData.totalPages || 1;
+  } else if (Array.isArray(resData)) {
+    rawArray = resData;
+  }
+  const mappedList = rawArray.map((item) => ({
     id: item.id,
     fullName: item.fullName,
     status: item.orderStatus ?? item.status,
@@ -32,6 +36,11 @@ const getListOrders = async (param) => {
     deliveryAddress: item.deliveryAddress,
     totalPrice: item.totalPrice,
   }));
+
+  return {
+    content: mappedList,
+    totalPages: totalPages,
+  };
 };
 
 const getOrderById = async (id) => {

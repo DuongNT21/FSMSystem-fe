@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ChevronRight,
+  ChevronLeft,
   Package,
   MapPin,
   X,
@@ -32,6 +33,9 @@ const OrderPage = ({ isAdmin = false }) => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPage, setTotalPage] = useState(1);
+
   const statusConfig = {
     pending: {
       label: "Chờ xử lý",
@@ -59,19 +63,30 @@ const OrderPage = ({ isAdmin = false }) => {
   const adminStatuses = ["all", "accepted", "done"];
 
   useEffect(() => {
+    setCurrentPage(0);
+  }, [filterStatus, fromDate, toDate]);
+
+  useEffect(() => {
     fetchOrders();
-  }, [isAdmin, filterStatus, fromDate, toDate]);
+  }, [isAdmin, filterStatus, fromDate, toDate, currentPage]);
 
   const fetchOrders = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
+
       const params = {
         status: filterStatus === "all" ? undefined : filterStatus,
         fromDate: fromDate || undefined,
         toDate: toDate || undefined,
+        page: currentPage,
+        size: 10,
+        sort: "createdAt,desc",
       };
-      const data = await orderService.getListOrders(params);
-      setOrders(data || []);
+
+      const result = await orderService.getListOrders(params);
+
+      setOrders(result?.content || []);
+      setTotalPage(result?.totalPages || 1);
     } catch (error) {
       toast.error("Không thể tải danh sách đơn hàng");
     } finally {
@@ -191,97 +206,129 @@ const OrderPage = ({ isAdmin = false }) => {
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-100 font-medium text-slate-400">
             Không tìm thấy đơn hàng nào trong khoảng thời gian này.
           </div>
-        ) : isAdmin ? (
-          /* TABLE VIEW FOR ADMIN */
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold">
-                <tr>
-                  <th className="p-4">MÃ ĐƠN</th>
-                  <th className="p-4">KHÁCH HÀNG</th>
-                  <th className="p-4">TỔNG TIỀN</th>
-                  <th className="p-4">TRẠNG THÁI</th>
-                  <th className="p-4 text-right">HÀNH ĐỘNG</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="p-4 font-bold">#{order.id}</td>
-                    <td className="p-4 font-semibold text-slate-700">
-                      {order.fullName}
-                    </td>
-                    <td className="p-4 font-black text-rose-500">
-                      {order.totalPrice.toLocaleString()}₫
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()]?.color}`}
+        ) : (
+          <>
+            {isAdmin ? (
+              /* TABLE VIEW FOR ADMIN */
+              <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold">
+                    <tr>
+                      <th className="p-4">MÃ ĐƠN</th>
+                      <th className="p-4">KHÁCH HÀNG</th>
+                      <th className="p-4">TỔNG TIỀN</th>
+                      <th className="p-4">TRẠNG THÁI</th>
+                      <th className="p-4 text-right">HÀNH ĐỘNG</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {orders.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="hover:bg-slate-50/50 transition-colors"
                       >
-                        {
-                          statusConfig[
-                            (order.status || "pending").toLowerCase()
-                          ]?.icon
-                        }{" "}
+                        <td className="p-4 font-bold">#{order.id}</td>
+                        <td className="p-4 font-semibold text-slate-700">
+                          {order.fullName}
+                        </td>
+                        <td className="p-4 font-black text-rose-500">
+                          {order.totalPrice.toLocaleString()}₫
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()]?.color}`}
+                          >
+                            {
+                              statusConfig[
+                                (order.status || "pending").toLowerCase()
+                              ]?.icon
+                            }{" "}
+                            {
+                              statusConfig[
+                                (order.status || "pending").toLowerCase()
+                              ]?.label
+                            }
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => handleRowClick(order)}
+                            className="text-xs font-bold bg-slate-900 text-white px-4 py-1.5 rounded-lg hover:bg-rose-500 transition-all"
+                          >
+                            Xem chi tiết
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* TABLE VIEW FOR USER */
+              <div className="grid gap-4">
+                {orders.map((order) => (
+                  <div
+                    key={order.id}
+                    onClick={() => handleRowClick(order)}
+                    className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-rose-200 cursor-pointer transition-all shadow-sm"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-rose-50 text-rose-500 rounded-xl">
+                        <Package size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900">
+                          Đơn hàng #{order.id}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Tổng: {order.totalPrice.toLocaleString()}₫
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()]?.color}`}
+                      >
                         {
                           statusConfig[
                             (order.status || "pending").toLowerCase()
                           ]?.label
                         }
                       </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleRowClick(order)}
-                        className="text-xs font-bold bg-slate-900 text-white px-4 py-1.5 rounded-lg hover:bg-rose-500 transition-all"
-                      >
-                        Xem chi tiết
-                      </button>
-                    </td>
-                  </tr>
+                      <ChevronRight size={18} className="text-slate-300" />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          /* TABLE VIEW FOR USER */
-          <div className="grid gap-4">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                onClick={() => handleRowClick(order)}
-                className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-rose-200 cursor-pointer transition-all shadow-sm"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-rose-50 text-rose-500 rounded-xl">
-                    <Package size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900">
-                      Đơn hàng #{order.id}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Tổng: {order.totalPrice.toLocaleString()}₫
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase ${statusConfig[(order.status || "pending").toLowerCase()]?.color}`}
-                  >
-                    {
-                      statusConfig[(order.status || "pending").toLowerCase()]
-                        ?.label
-                    }
-                  </span>
-                  <ChevronRight size={18} className="text-slate-300" />
-                </div>
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* --- GIAO DIỆN PHÂN TRANG --- */}
+            {totalPage > 0 && (
+              <div className="flex justify-center items-center gap-4 mt-8">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(0, prev - 1))
+                  }
+                  disabled={currentPage === 0}
+                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-rose-500 hover:border-rose-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <span className="text-sm font-bold text-slate-600 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                  Trang {currentPage + 1} / {totalPage}
+                </span>
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPage - 1, prev + 1))
+                  }
+                  disabled={currentPage >= totalPage - 1}
+                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-rose-500 hover:border-rose-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {selectedOrder && (
