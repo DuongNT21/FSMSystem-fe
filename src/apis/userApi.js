@@ -9,4 +9,13 @@ export const userApi = {
   blockUser: (id) => {
     return axiosClient.put(`${API_URL}/${id}/block`);
   },
+  createStaff: (data) => {
+    return axiosClient.post(`${API_URL}/staff`, data);
+  },
+  updateStaff: (id, data) => {
+    return axiosClient.put(`${API_URL}/staff/${id}`, data);
+  },
+  deleteStaff: (id) => {
+    return axiosClient.delete(`${API_URL}/staff/${id}`);
+  },
 };

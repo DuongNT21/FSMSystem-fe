@@ -10,15 +10,25 @@ import {
   Mail,
   Phone,
   MapPin,
+  Plus,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { userService } from "../../../services/userService";
+import { useAuth } from "../../../contexts/AuthContext";
+import { UserModal } from "./UserModal";
+
 export const AdminUserList = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const { user: currentUser } = useAuth();
+  const isCurrentAdmin = currentUser?.roleName === "Admin";
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState(null);
 
   const [filters, setFilters] = useState({
     name: "",
@@ -95,7 +105,7 @@ export const AdminUserList = () => {
   };
 
   const handleToggleStatus = async (user) => {
-    if (user.role === "Admin") return;
+    if (user.role === "Admin" || user.role === "Staff") return;
 
     const newStatus = !user.active;
     const actionText = newStatus ? "bỏ chặn" : "chặn";
@@ -112,10 +122,42 @@ export const AdminUserList = () => {
     }
   };
 
+  const handleAddStaff = () => {
+    setSelectedStaff(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditStaff = (user) => {
+    setSelectedStaff(user);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteStaff = async (staffUser) => {
+    if (window.confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN nhân viên ${staffUser.username}? Hành động này không thể hoàn tác.`)) {
+      try {
+        await userService.deleteStaff(staffUser.id);
+        toast.success(`Đã xóa nhân viên ${staffUser.username}`);
+        fetchUsers();
+      } catch (error) {
+        console.error(error);
+        toast.error("Lỗi khi xóa nhân viên");
+      }
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-slate-800">Quản lý người dùng</h2>
+        {isCurrentAdmin && (
+          <button
+            onClick={handleAddStaff}
+            className="bg-rose-500 hover:opacity-90 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 shadow-lg shadow-rose-500/20 transition-all transform active:scale-95"
+          >
+            <Plus size={18} />
+            <span>Thêm Nhân Viên</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -319,19 +361,39 @@ export const AdminUserList = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {!isAdmin && (
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            user.active
-                              ? "hover:bg-red-50 text-red-500"
-                              : "hover:bg-green-50 text-green-500"
-                          }`}
-                          title={user.active ? "Chặn người dùng" : "Bỏ chặn người dùng"}
-                        >
-                          {user.active ? <Lock size={18} /> : <Unlock size={18} />}
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {!isAdmin && (
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              user.active
+                                ? "hover:bg-red-50 text-red-500"
+                                : "hover:bg-green-50 text-green-500"
+                            }`}
+                            title={user.active ? "Chặn người dùng" : "Bỏ chặn người dùng"}
+                          >
+                            {user.active ? <Lock size={18} /> : <Unlock size={18} />}
+                          </button>
+                        )}
+                        {isCurrentAdmin && user.role === "Staff" && (
+                          <>
+                            <button
+                              onClick={() => handleEditStaff(user)}
+                              className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
+                              title="Chỉnh sửa nhân viên"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStaff(user)}
+                              className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                              title="Xóa nhân viên"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -386,6 +448,18 @@ export const AdminUserList = () => {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <UserModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          staff={selectedStaff}
+          onSuccess={() => {
+            setIsModalOpen(false);
+            fetchUsers();
+          }}
+        />
+      )}
     </div>
   );
 };
