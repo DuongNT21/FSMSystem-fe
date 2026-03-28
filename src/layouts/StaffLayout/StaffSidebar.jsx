@@ -28,7 +28,6 @@ export const StaffSidebar = ({
     { to: "/staff/promotions", icon: Star, label: "Khuyến mãi" },
     { to: "/staff/orders", icon: ShoppingBag, label: "Đơn hàng" },
     { to: "/staff/users", icon: Users, label: "Khách hàng" },
-    { to: "/staff/reviews", icon: MessageSquare, label: "Đánh giá" },
   ];
 
   const sidebarLinkClass = ({ isActive }) =>
