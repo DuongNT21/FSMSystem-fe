@@ -212,9 +212,13 @@ export const CustomerProductDetail = () => {
         <div className="flex flex-col gap-8">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="px-3 py-1 bg-rose-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wider">
-                Tiết kiệm {activePromotion?.discountValue}%
-              </span>
+              {activePromotion &&
+                activePromotion.discountValue >
+                  0(
+                    <span className="px-3 py-1 bg-rose-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wider">
+                      Tiết kiệm {activePromotion?.discountValue}%
+                    </span>,
+                  )}
               <span className="text-slate-400 text-sm font-medium">
                 Mã: FL-RP-{bouquet.id}
               </span>
@@ -254,14 +258,19 @@ export const CustomerProductDetail = () => {
             <div className="mt-6 p-4 bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <Gift className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                  <Gift
+                    className="h-5 w-5 text-emerald-500"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-bold text-emerald-800">
                     Special Offer: A site-wide promotion is active!
                   </p>
                   <p className="text-sm text-emerald-700 mt-1">
-                    {activePromotion.name}: Use code <span className="font-bold">{activePromotion.code}</span> at checkout.
+                    {activePromotion.name}: Use code{" "}
+                    <span className="font-bold">{activePromotion.code}</span> at
+                    checkout.
                   </p>
                 </div>
               </div>
