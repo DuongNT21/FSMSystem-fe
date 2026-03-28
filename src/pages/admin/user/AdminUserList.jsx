@@ -105,7 +105,7 @@ export const AdminUserList = () => {
   };
 
   const handleToggleStatus = async (user) => {
-    if (user.role === "Admin" || user.role === "Staff") return;
+    if (user.role === "Admin") return;
 
     const newStatus = !user.active;
     const actionText = newStatus ? "bỏ chặn" : "chặn";

@@ -34,6 +34,9 @@ import PaymentFailed from "../pages/payment/PaymentFailed.jsx";
 import OrderPage from "../pages/order/OrderPage.jsx";
 import { AdminUserList } from "../pages/admin/user/AdminUserList.jsx";
 import StaffReviewsPage from "../pages/staff/reviews/StaffReviewsPage.jsx";
+import { OccasionsPage } from "../pages/customer/OccasionsPage.jsx";
+import { AboutPage } from "../pages/customer/AboutPage.jsx";
+import { ContactPage } from "../pages/customer/ContactPage.jsx";
 // import CategoryDetail from "../pages/admin/category/CategoryDetail";
 
 export const AppRoutes = () =>
@@ -75,6 +78,18 @@ export const AppRoutes = () =>
         {
           path: "orders",
           element: <OrderPage />,
+        },
+        {
+          path: "occasions",
+          element: <OccasionsPage />,
+        },
+        {
+          path: "about",
+          element: <AboutPage />,
+        },
+        {
+          path: "contact",
+          element: <ContactPage />,
         },
       ],
     },

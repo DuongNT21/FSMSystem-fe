@@ -6,7 +6,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Giả lập số lượng hàng trong giỏ
-  const cartItemCount = 3;
+  const cartItemCount = 0;
 
   // Class hỗ trợ active link (tô đậm khi đang ở trang đó)
   const navLinkClass = ({ isActive }) => 

@@ -11,6 +11,7 @@ import {
   Layers,
 } from "lucide-react";
 import { rawMaterialService } from "../../../services/rawMaterialService";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const ListRawMaterials = () => {
   const [items, setItems] = useState([]);
@@ -20,6 +21,8 @@ const ListRawMaterials = () => {
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(1);
   const perPage = 8;
+  const { user: currentUser } = useAuth();
+  const isCurrentAdmin = currentUser?.roleName === "Admin";
 
   const fetchList = async () => {
     try {
@@ -137,7 +140,7 @@ const ListRawMaterials = () => {
         </div>
 
         <Link
-          to="/staff/raw-material/create"
+          to={isCurrentAdmin ? "/admin/raw-material/create" : "/staff/raw-material/create"}
           className="flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-lg transition-colors w-full md:w-auto font-semibold shadow-md active:scale-95"
         >
           <Plus size={18} /> Thêm mới nguyên liệu
@@ -166,9 +169,7 @@ const ListRawMaterials = () => {
                     Số lượng <SortIcon field="quantity" />
                   </div>
                 </th>
-                <th className="p-4 text-center text-sm font-bold text-gray-700">
-                  Hành động
-                </th>
+               
               </tr>
             </thead>
 
@@ -200,29 +201,7 @@ const ListRawMaterials = () => {
                     <td className="p-4 text-sm text-gray-700 font-semibold">
                       {it.quantity}
                     </td>
-                    <td className="p-4 text-center">
-                      <div className="flex justify-center gap-2">
-                        <Link
-                          to={`/staff/raw-material/${it.id}`}
-                          className="p-2 text-rose-600 hover:bg-rose-100 rounded-lg transition-all"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={20} />
-                        </Link>
-                        <button
-                          onClick={async () => {
-                            if (!confirm(`Bạn có chắc muốn xóa "${it.name}"?`))
-                              return;
-                            await rawMaterialService.deleteRawMaterial(it.id);
-                            await fetchList();
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                          title="Xóa"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
-                    </td>
+                   
                   </tr>
                 ))
               )}
