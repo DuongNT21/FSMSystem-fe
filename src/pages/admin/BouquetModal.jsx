@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { X, CloudUpload, Trash2, Plus } from "lucide-react";
 import { bouquetApi, materialApi, categoryApi } from "../../apis/flowerApi";
+import { getAllBatch } from "../../services/inventoryService";
 
 export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -11,7 +12,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     categoryId: "",
     materials: []
   });
-  const [allMaterials, setAllMaterials] = useState([]);
+  const [allBatches, setAllBatches] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [existingImages, setExistingImages] = useState([]); // { id, image, publicId }
   const [deletedPublicIds, setDeletedPublicIds] = useState([]);
@@ -20,25 +21,16 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [materialError, setMaterialError] = useState("");
   const [categoryError, setCategoryError] = useState("");
-  const [materialPrices, setMaterialPrices] = useState({}); // { [materialId]: price }
 
   useEffect(() => {
-    const fetchMaterials = async () => {
+    const fetchBatches = async () => {
       try {
-        const response = await materialApi.getAll({ size: 100 });
-        const d = response?.data;
-        const list = Array.isArray(d)
-          ? d
-          : Array.isArray(d?.data?.items)
-          ? d.data.items
-          : Array.isArray(d?.data)
-          ? d.data
-          : Array.isArray(d?.items)
-          ? d.items
-          : [];
-        setAllMaterials(list);
+        const response = await getAllBatch();
+        const list = response?.data || [];
+        // Only show active batches with stock for selection
+        setAllBatches(list.filter(b => b.status === "ACTIVE" && b.remainQuantity > 0));
       } catch (error) {
-        console.error("Error fetching materials:", error);
+        console.error("Error fetching batches:", error);
       }
     };
     const fetchCategories = async () => {
@@ -57,7 +49,7 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         console.error("Error fetching categories:", error);
       }
     };
-    fetchMaterials();
+    fetchBatches();
     fetchCategories();
   }, []);
 
@@ -69,25 +61,44 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         status: bouquet.status || 1,
         description: bouquet.description || "",
         categoryId: bouquet.category?.id || "",
-        materials: (bouquet.bouquetsMaterials ?? []).map(m => ({
-          name: m.rawMaterialName,
-          quantity: m.quantity
-        }))
+        materials: (bouquet.bouquetsMaterials ?? []).flatMap(m => {
+          // Reconstruct individual batches from the consolidated JSON data sent by the backend
+          let extractedBatches = [];
+          try {
+            if (m.batchData) {
+              extractedBatches = typeof m.batchData === 'string' ? JSON.parse(m.batchData) : m.batchData;
+            }
+          } catch (e) {
+            console.error("Lỗi khi xử lý dữ liệu lô hàng cho:", m.rawMaterialName, e);
+          }
+
+          if (extractedBatches.length > 0) {
+            return extractedBatches.map(eb => {
+              const batchId = eb.batchId || eb.id;
+              const batchInfo = allBatches.find(b => b.id === batchId);
+              return {
+                batchId: batchId,
+                rawMaterialId: m.rawMaterialId,
+                name: m.rawMaterialName,
+                quantity: eb.quantity,
+                unitPrice: batchInfo?.importPrice || eb.unitPrice || 0
+              };
+            });
+          }
+
+          // Fallback if no consolidated data is found (supports legacy data format)
+          const bId = m.rawMaterialBatchId || m.batchId;
+          const batchInfo = allBatches.find(b => b.id === bId);
+          return [{
+            batchId: bId,
+            rawMaterialId: batchInfo?.rawMaterialId || m.rawMaterialId,
+            name: m.rawMaterialName,
+            quantity: m.quantity,
+            unitPrice: batchInfo?.importPrice || m.unitPrice || m.price || 0
+          }];
+        })
       });
       setExistingImages(bouquet.images?.map(img => ({ id: img.id, image: img.image, publicId: img.publicId })) || []);
-
-      (bouquet.bouquetsMaterials ?? []).forEach(m => {
-        if (m.rawMaterialId) {
-          bouquetApi.getCost(m.rawMaterialId)
-            .then(res => {
-              const price = res?.data?.data ?? res?.data ?? res;
-              if (typeof price === 'number') {
-                setMaterialPrices(prev => ({ ...prev, [m.rawMaterialId]: price }));
-              }
-            })
-            .catch(error => console.error(error));
-        }
-      });
     } else {
       setFormData({
         name: "",
@@ -102,50 +113,45 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     setDeletedPublicIds([]);
     setSelectedImages([]);
     setNewImagePreviews([]);
-    setMaterialPrices({});
-  }, [bouquet]);
+  }, [bouquet, allBatches]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleAddMaterial = (materialId) => {
-    if (!materialId) return;
-    const mat = allMaterials.find(m => Number(m.id) === parseInt(materialId));
-    if (!mat) return;
-    if (formData.materials.find(m => m.name === mat.name)) return;
+  const handleAddMaterial = (batchId) => {
+    if (!batchId) return;
+    const batch = allBatches.find(b => b.id === parseInt(batchId));
+    if (!batch) return;
+
+    // Allow multiple batches of the same rawMaterialId, but prevent adding the exact same batch twice
+    if (formData.materials.some(m => m.batchId === batch.id)) return;
 
     setFormData({
       ...formData,
-      materials: [...formData.materials, { name: mat.name, quantity: 1 }]
-    });
-
-    // Fetch dynamic unit price
-    bouquetApi.getCost(materialId)
-      .then(res => {
-        const price = res?.data?.data ?? res?.data ?? res;
-        if (typeof price === 'number') {
-          setMaterialPrices(prev => ({ ...prev, [mat.id]: price }));
-        }
-      })
-      .catch(error => {
-        console.error(`Error fetching cost for material ${materialId}:`, error);
-        // Fallback to importPrice is handled in the useMemo and render
-      });
-  };
-
-  const handleUpdateMaterialQty = (name, qty) => {
-    setFormData({
-      ...formData,
-      materials: formData.materials.map(m => m.name === name ? { ...m, quantity: parseInt(qty) || 1 } : m)
+      materials: [...formData.materials, { 
+        batchId: batch.id, 
+        rawMaterialId: batch.rawMaterialId,
+        name: batch.rawMaterialName, 
+        quantity: 1, 
+        unitPrice: batch.importPrice 
+      }]
     });
   };
 
-  const handleRemoveMaterial = (name) => {
+
+  const handleUpdateMaterialQty = (batchId, qty) => {
     setFormData({
       ...formData,
-      materials: formData.materials.filter(m => m.name !== name)
+      materials: formData.materials.map(m => m.batchId === batchId ? { ...m, quantity: parseInt(qty) || 1 } : m)
+    });
+  };
+
+  const handleRemoveMaterial = (batchId) => {
+    setFormData({
+      ...formData,
+      materials: formData.materials.filter(m => m.batchId !== batchId)
     });
   };
 
@@ -181,14 +187,23 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
     }
   };
 
+  const groupedMaterials = useMemo(() => {
+    return formData.materials.reduce((acc, m) => {
+      if (!acc[m.rawMaterialId]) {
+        acc[m.rawMaterialId] = { name: m.name, batches: [], totalQty: 0, totalCost: 0 };
+      }
+      acc[m.rawMaterialId].batches.push(m);
+      acc[m.rawMaterialId].totalQty += m.quantity;
+      acc[m.rawMaterialId].totalCost += (m.unitPrice || 0) * m.quantity;
+      return acc;
+    }, {});
+  }, [formData.materials]);
+
   const totalMaterialCost = useMemo(() => {
     return formData.materials.reduce((sum, m) => {
-      const mat = allMaterials.find(am => am.name === m.name);
-      if (!mat) return sum;
-      const unitPrice = materialPrices[mat.id] ?? mat?.importPrice ?? mat?.price ?? 0;
-      return sum + unitPrice * m.quantity;
+      return sum + (m.unitPrice || 0) * m.quantity;
     }, 0);
-  }, [formData.materials, allMaterials, materialPrices]);
+  }, [formData.materials]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -205,9 +220,11 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
         status: parseInt(formData.status),
         description: formData.description,
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-        materials: formData.materials
-          .map(m => ({ id: allMaterials.find(am => am.name === m.name)?.id, quantity: m.quantity }))
-          .filter(m => m.id != null)
+        materials: formData.materials.map(m => ({
+          id: m.rawMaterialId,
+          batchId: m.batchId,
+          quantity: m.quantity
+        }))
       };
       if (bouquet && deletedPublicIds.length > 0) {
         requestPayload.deleteImages = deletedPublicIds;
@@ -315,9 +332,11 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                   onChange={(e) => handleAddMaterial(e.target.value)}
                   value=""
                 >
-                  <option value="">Chọn vật tư để thêm...</option>
-                  {allMaterials.map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
+                  <option value="">Chọn lô nguyên liệu (Batch)...</option>
+                  {allBatches.map(b => (
+                    <option key={b.id} value={b.id}>
+                      [{b.id}] {b.rawMaterialName} - Tồn: {b.remainQuantity} - Giá: {new Intl.NumberFormat("vi-VN").format(b.importPrice)} đ
+                    </option>
                   ))}
                 </select>
               </div>
@@ -334,43 +353,56 @@ export const BouquetModal = ({ isOpen, onClose, bouquet, onSuccess }) => {
                         <th className="px-4 py-3 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-12 text-center">Xóa</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {formData.materials.map((m) => {
-                        const matInfo = allMaterials.find(am => am.name === m.name);
-                        const unitPrice = matInfo ? (materialPrices[matInfo.id] ?? matInfo.importPrice ?? matInfo.price ?? 0) : 0;
-                        const lineTotal = unitPrice * m.quantity;
-                        return (
-                          <tr key={m.name}>
-                            <td className="px-4 py-3">
-                              <span className="text-sm font-medium text-slate-700">{m.name}</span>
+                    <tbody className="divide-y divide-slate-200">
+                      {Object.keys(groupedMaterials).map((matId) => (
+                        <React.Fragment key={matId}>
+                          <tr className="bg-slate-100/50">
+                            <td colSpan="2" className="px-4 py-2">
+                              <span className="text-xs font-black text-slate-900 uppercase">{groupedMaterials[matId].name}</span>
                             </td>
-                            <td className="px-4 py-3 text-right text-xs text-slate-500 font-mono">
-                              {unitPrice > 0 ? new Intl.NumberFormat("vi-VN").format(unitPrice) : <span className="italic text-slate-300">—</span>}
+                            <td className="px-4 py-2 text-xs font-bold text-slate-600">Total: {groupedMaterials[matId].totalQty}</td>
+                            <td className="px-4 py-2 text-right text-xs font-bold text-rose-600">
+                              {new Intl.NumberFormat("vi-VN").format(groupedMaterials[matId].totalCost)} đ
                             </td>
-                            <td className="px-4 py-3">
-                              <input
-                                className="w-full px-3 py-1.5 text-sm rounded border border-slate-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all"
-                                min="1"
-                                type="number"
-                                value={m.quantity}
-                                onChange={(e) => handleUpdateMaterialQty(m.name, e.target.value)}
-                              />
-                            </td>
-                            <td className="px-4 py-3 text-right text-xs font-semibold text-slate-600 font-mono">
-                              {unitPrice > 0 ? new Intl.NumberFormat("vi-VN").format(lineTotal) : <span className="italic text-slate-300">—</span>}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveMaterial(m.name)}
-                                className="text-slate-400 hover:text-rose-500 transition-colors"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </td>
+                            <td></td>
                           </tr>
-                        );
-                      })}
+                          {groupedMaterials[matId].batches.map((m) => {
+                            const unitPrice = m.unitPrice || 0;
+                            const lineTotal = unitPrice * m.quantity;
+                            return (
+                              <tr key={m.batchId} className="group">
+                                <td className="px-6 py-2">
+                                  <span className="text-xs text-slate-500">Lô hàng #{m.batchId}</span>
+                                </td>
+                                <td className="px-4 py-2 text-right text-xs text-slate-400 font-mono">
+                                  {unitPrice > 0 ? new Intl.NumberFormat("vi-VN").format(unitPrice) : "—"}
+                                </td>
+                                <td className="px-4 py-2">
+                                  <input
+                                    className="w-full px-2 py-1 text-xs rounded border border-slate-200 focus:ring-1 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all"
+                                    min="1"
+                                    type="number"
+                                    value={m.quantity}
+                                    onChange={(e) => handleUpdateMaterialQty(m.batchId, e.target.value)}
+                                  />
+                                </td>
+                                <td className="px-4 py-2 text-right text-xs text-slate-500 font-mono">
+                                  {unitPrice > 0 ? new Intl.NumberFormat("vi-VN").format(lineTotal) : "—"}
+                                </td>
+                                <td className="px-4 py-2 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveMaterial(m.batchId)}
+                                    className="text-slate-300 hover:text-rose-500 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
                     </tbody>
                   </table>
                   {totalMaterialCost > 0 && (
